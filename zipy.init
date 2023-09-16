@@ -1,3 +1,0 @@
-import zipy from 'zipyai';
-
-zipy.init('3daa0919');
