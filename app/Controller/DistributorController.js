@@ -9,7 +9,7 @@ const fs = require("fs");
 require("dotenv").config();
 const token = require("../Models/token");
 const Order = require("../Models/Order");
-let easyinvoice = require("easyinvoice");
+
 const Upload = require("../Middleware/upload");
 
 // login function
