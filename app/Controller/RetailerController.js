@@ -164,6 +164,7 @@ module.exports.retailer_home = async (req, res) => {
       categorydata,
       productdata,
       offerdata,
+      distributor
     });
   } catch (err) {
     res.send({ status: false, message: err });
