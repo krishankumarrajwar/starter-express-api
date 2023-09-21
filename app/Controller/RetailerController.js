@@ -23,6 +23,7 @@ module.exports.retailer_login = async (req, resp) => {
     phonenumber: phone,
     password: password,
   }).then(async (result) => {
+    console.log(result)
     if (result != null) {
       const jwt = generateUsertoken(result);
       let saveToken = new token({ token: jwt });
@@ -253,39 +254,47 @@ pro.map((item) => {
 };
 
 module.exports.product_details = async (req, res) => {
-  var retailer = await Retailer.findOne({ _id: req.user._id });
-  var retailercity = retailer.city;
-  var distributor = await Distributor.find({ city: retailercity });
-  var distributor_id = [];
-  var distributor_data = [];
-  distributor.map((id) => {
-    distributor_id.push(id._id.toString());
-  });
-  console.log(distributor_id);
-  var pro = await Product.findOne({ _id: req.body.id });
-  if (pro.distributors.length > 0) {
-    pro.distributors.map((dis) => {
-      if (distributor_id.includes(dis.distributorId)) {
-        distributor_data.push(dis);
-      }
+  try{
+    console.log(req.user._id)
+    var retailer = await Retailer.findOne({ _id: req.user._id });
+    var retailercity = retailer.city;
+    var distributor = await Distributor.find({ city: retailercity });
+    var distributor_id = [];
+    var distributor_data = [];
+    distributor.map((id) => {
+      distributor_id.push(id._id.toString());
     });
+    console.log(distributor_id);
+    console.log("Product", req.body);
+
+    var pro = await Product.findOne({ _id: req.body.id });
+    if (pro && pro.distributors.length > 0) {
+      pro.distributors.map((dis) => {
+        if (distributor_id.includes(dis.distributorId)) {
+          distributor_data.push(dis);
+        }
+      });
+    }
+  
+    var product = {
+      name: pro?.title,
+      subname: pro?.sub_title,
+      description: pro?.description,
+      price: distributor_data[0]?.price,
+      stock: distributor_data[0]?.stock,
+      applicable_tax: pro?.applicable_tax,
+    };
+  
+    res.send({
+      product: product,
+      distributor: distributor_data,
+      status: true,
+      message: "Product data show successfull",
+    });
+  }catch (err){
+    console.log(err)
   }
 
-  var product = {
-    name: pro.title,
-    subname: pro.sub_title,
-    description: pro.description,
-    price: distributor_data[0].price,
-    stock: distributor_data[0].stock,
-    applicable_tax: pro.applicable_tax,
-  };
-
-  res.send({
-    product: product,
-    distributor: distributor_data,
-    status: true,
-    message: "Product data show successfull",
-  });
 };
 
 module.exports.add_to_cart = async (req, res) => {
