@@ -268,6 +268,7 @@ module.exports.product_details = async (req, res) => {
     console.log("Product", req.body);
 
     var pro = await Product.findOne({ _id: req.body.id });
+    console.log('pro',pro)
     if (pro && pro.distributors.length > 0) {
       pro.distributors.map((dis) => {
         if (distributor_id.includes(dis.distributorId)) {
@@ -286,8 +287,8 @@ module.exports.product_details = async (req, res) => {
     };
   
     res.send({
-      product: product,
-      distributor: distributor_data,
+      product: pro,
+      distributor: pro.distributors,
       status: true,
       message: "Product data show successfull",
     });
