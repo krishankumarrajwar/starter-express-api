@@ -204,9 +204,12 @@ module.exports.distributor_order = async (req, res) => {
           let retailerName = await Retailer.findOne({
             _id: e.retailer_id,
           });
-          e._doc.distributor_name =
+          e.distributor_name =
             distributerName.firstname + " " + distributerName.lastname;
-          e._doc.retailer_name = retailerName.ownername;
+          e.retailer_name = retailerName.ownername;
+
+          console.log('retailerName', retailerName)
+          // e = {...e, "retailerName": retailerName , "distributerName":distributerName  }
           return e;
         })
       );
@@ -280,9 +283,9 @@ module.exports.create_invoice = async (req, res) => {
     let { batch_no, exp_date, order_id } = req.body;
     let getOrder = await Order.findOne({ order_id: order_id });
     if (!getOrder) throw new Error("not found");
-    if (getOrder.order_status == 1 || getOrder.order_status == 3) {
-      return res.send({ status: true, message: "order already completed" });
-    }
+    // if (getOrder.order_status == 1 || getOrder.order_status == 3) {
+    //   return res.send({ status: true, message: "order already completed" });
+    // }
     console.log("===================>", getOrder);
     const objectId = getOrder.distributor_id;
     const idValue = objectId.valueOf();

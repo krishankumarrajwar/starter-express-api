@@ -380,6 +380,7 @@ module.exports.get_cart = async (req, res) => {
 
         var obj = {
           _id: item[i]._id,
+          product:product,
           product_id: item[i].product_id,
           product_name: product.title,
           distributor_name: dis[0].distributorName,
@@ -500,6 +501,7 @@ module.exports.checkout = async (req, res) => {
     let item = [];
     let distributorId;
     console.log("reqdata==========>", req.body);
+    
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
       var len = cartdata.length;
 
@@ -533,23 +535,31 @@ module.exports.checkout = async (req, res) => {
       }
       await product.save();
     });
-    var orderid =
-      "MEDI" + (Math.floor(Math.random() * (99999 - 11111)) + 11111);
-    console.log(orderid);
+    var orderidData ="MEDI" + (Math.floor(Math.random() * (99999 - 11111)) + 11111);
+    console.log(orderidData);
     var obj = {
       retailer_id: req.user._id,
-      order_id: orderid,
+      order_id: orderidData,
       distributor_id: distributorId,
-      price: req.body.price,
+      price: req.body.data.price,
       products: item,
-      payment_type: req.body.payment_type,
-      bonus_quantity: req.body.bonus_quantity,
+      payment_type: req.body.data.payment_type,
+      bonus_quantity: req.body.data.bonus_quantity,
+      originalPrice: req.body.data.originalPrice,
+      tax: req.body.data.tax, 
+       deliveryCost: req.body.data.deliveryCost,
+
     };
+
+    console.log('obj', obj, "price", req.body.data.price)
     await Order.create(obj)
       .then((item) => {
+        console.log('added ed order', item)
         res.send({ status: true, message: "order success", data: item });
       })
       .catch((err) => {
+        console.log('added ed err', err)
+
         res.send({ status: true, message: err.message, data: null });
       });
   } catch (err) {
@@ -573,6 +583,10 @@ module.exports.return_order = async (req, res) => {
   console.log("called");
   var id = req.body.order_id;
   var status = "returned";
+  var files =''
+  if(req.files){
+    files=req.file.location
+  }
   await Order.updateOne(
     { order_id: id, order_status: 3 },
     {
@@ -581,7 +595,7 @@ module.exports.return_order = async (req, res) => {
       return_status: 1,
       return_reason: req.body.reason,
       return_message: req.body.message,
-      return_image: req.file.location,
+      return_image: files,
     }
   )
     .then((result) => {
@@ -624,23 +638,25 @@ module.exports.order_details = async (req, res) => {
         let retailerName = await Retailer.findOne({
           _id: result.retailer_id,
         });
-        result._doc.distributor_name =
+        result.distributor_name =
           distributerName.firstname + " " + distributerName.lastname;
-        result._doc.distributor_address =
+        result.distributor_address =
           distributerName.city +
           " " +
           distributerName.area +
           " " +
           distributerName.state;
-        result._doc.retailer_name = retailerName.ownername;
-        result._doc.retailer_address = retailerName.address;
-        result._doc.item_total = totalAmount;
-        result._doc.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
-        result._doc.applicable_tax = getProductTax.applicable_tax;
+        result.retailer_name = retailerName.ownername;
+        result.retailer_address = retailerName.address;
+        result.item_total = totalAmount;
+        result.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
+        result.applicable_tax = getProductTax.applicable_tax;
 
-        result._doc.delivery_fee = 100;
-        result._doc.order_total =
-          result._doc.item_total + result._doc.Tax + result._doc.delivery_fee;
+        result.delivery_fee = 100;
+        result.order_total =
+          result.item_total + result.Tax + result.delivery_fee;
+
+          console.log(result)
         res.send({
           status: true,
           message: "Order Details",
@@ -696,6 +712,8 @@ module.exports.get_return = async (req, res) => {
         },
       };
     }
+
+    console.log(obj)
     await Order.find(obj)
       .then(async (item) => {
         const mappedResults = await Promise.all(
@@ -799,7 +817,7 @@ module.exports.paymentInitiated = async (req, res) => {
   "merchantTransactionId": "MT"+ Math.floor(new Date()),
   "merchantUserId": "MUID123",
   "amount": req.body.paymentPayload.price*100,
-  "redirectUrl": "https://meddaily.in/#/ordersummary",
+  "redirectUrl": "https://meddaily.in/#/home",
   "redirectMode": "REDIRECT",
   "callbackUrl": "http://localhost:8000/calback",
   "mobileNumber": "9999999999",
