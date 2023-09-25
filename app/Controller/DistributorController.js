@@ -659,6 +659,7 @@ module.exports.get_invoice = async (req, res) => {
     "bottom-notice": "Kindly pay your invoice within 15 days.",
     // Settings to customize your invoice
     "settings": {
+      
         "currency": "INR", // See documentation 'Locales and Currency' for more info. Leave empty for no currency.
         // "locale": "nl-NL", // Defaults to en-US, used for number formatting (See documentation 'Locales and Currency')        
         // "margin-top": 25, // Defaults to '25'
@@ -696,6 +697,7 @@ module.exports.get_invoice = async (req, res) => {
 
       res.send({ status: true, message: "data fetched ", data: data , pdfLink:pdfLink});
   });
+
 
     
   } catch (err) {
