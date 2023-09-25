@@ -282,7 +282,7 @@ module.exports.create_invoice = async (req, res) => {
   try {
     let { batch_no, exp_date, order_id } = req.body;
     let getOrder = await Order.findOne({ order_id: order_id });
-    if (!getOrder) throw new Error("not found");
+    // if (!getOrder) throw new Error("not found");
     // if (getOrder.order_status == 1 || getOrder.order_status == 3) {
     //   return res.send({ status: true, message: "order already completed" });
     // }
@@ -556,6 +556,8 @@ module.exports.product_search = async (req, res) => {
 const { rm } = require("fs/promises");
 const payout = require("../Models/payout");
 const { off } = require("process");
+var easyinvoice = require('easyinvoice');
+
 module.exports.get_invoice = async (req, res) => {
   try {
     let getOrder = await Order.findOne({ order_id: req.query.order_id });
@@ -569,36 +571,133 @@ module.exports.get_invoice = async (req, res) => {
     });
 
     var data = {
-      client: {
-        company: getRetailer.businessname,
-        address: getRetailer.address,
-        pin: getRetailer.pincode,
-        city: getRetailer.city,
-        gstno: getRetailer.gstno,
+      "client": {
+        "company": getRetailer.businessname,
+        "address": getRetailer.address,
+        "pin": getRetailer.pincode,
+        "city": getRetailer.city,
+        "gstno": getRetailer.gstno,
       },
-      sender: {
-        distributorName: getDistributor.firstname + getDistributor.lastname,
-        area: getDistributor.area,
-        pin: getDistributor.pin,
-        city: getDistributor.city,
-        state: getDistributor.state,
+      "sender": {
+        "company": getDistributor.firstname + getDistributor.lastname,
+        "area": getDistributor.area,
+        "pin": getDistributor.pin,
+        "city": getDistributor.city,
+        "state": getDistributor.state,
       },
 
-      images: {
-        logo: "https://meddaily.s3.ap-south-1.amazonaws.com/MEDDAILY-LOGO-inverted.png",
+      "images": {
+        "logo": "https://meddaily.s3.ap-south-1.amazonaws.com/MEDDAILY-LOGO-inverted.png",
       },
-      products: getOrder.products,
-      bottomNotice: "Kindly pay your invoice within 15 days.",
-      settings: {
-        currency: "INR",
+      "products": getOrder.products,
+     " bottom-notice": "Kindly pay your invoice within 15 days.",
+      "settings": {
+        "currency": "INR",
       },
-      translate: {},
-      customize: {
+      "translate": {},
+      "customize": {
         // "template": fs.readFileSync('template.html', 'base64') // Must be base64 encoded html
       },
     };
+
+    var data1 = {
+    // Customize enables you to provide your own templates
+    // Please review the documentation for instructions and examples
+    "customize": {
+        //  "template": fs.readFileSync('template.html', 'base64') // Must be base64 encoded html 
+    },
+    "images": {
+        // The logo on top of your invoice
+        "logo": "https://www.meddaily.in/static/media/MEDDAILY-LOGO-inverted.2279581fa4814f43a0b8.png",
+        // The invoice background
+        // "background": "https://www.meddaily.in/static/media/MEDDAILY-LOGO-inverted.2279581fa4814f43a0b8.png"
+    },
+    // Your own data
+    "sender": {
+        // "company": "Sample Corp",
+        // "address": "Sample Street 123",
+        // "zip": "1234 AB",
+        // "city": "Sampletown",
+        // "country": "Samplecountry"
+        "company": getDistributor?.firstname + getDistributor?.lastname,
+        "area": getDistributor?.area,
+        "pin": getDistributor?.pin,
+        "city": getDistributor?.city,
+        "state": getDistributor?.state,
+        //"custom1": "custom value 1",
+        //"custom2": "custom value 2",
+        //"custom3": "custom value 3"
+    },
+    // Your recipient
+    "client": {
+        // "company": "Client Corp",
+        // "address": "Clientstreet 456",
+        // "zip": "4567 CD",
+        // "city": "Clientcity",
+        // "country": "Clientcountry"
+        // "custom1": "custom value 1",
+        // "custom2": "custom value 2",
+        // "custom3": "custom value 3"
+        "company": getRetailer?.businessname,
+        "address": getRetailer?.address,
+        "pin": getRetailer?.pincode,
+        "city": getRetailer?.city,
+        // "gstno": getRetailer.gstno,
+    },
+    "information": {
+        // Invoice number
+        "number": Math.floor(new Date()),
+        // Invoice data
+        "date": new Date().toDateString(),
+        // Invoice due date
+        "due-date": new Date().toDateString()
+    },
+    // The products you would like to see on your invoice
+    // Total values are being calculated automatically
+    "products":  getOrder?.products,
+    // The message you would like to display on the bottom of your invoice
+    "bottom-notice": "Kindly pay your invoice within 15 days.",
+    // Settings to customize your invoice
+    "settings": {
+        "currency": "INR", // See documentation 'Locales and Currency' for more info. Leave empty for no currency.
+        // "locale": "nl-NL", // Defaults to en-US, used for number formatting (See documentation 'Locales and Currency')        
+        // "margin-top": 25, // Defaults to '25'
+        // "margin-right": 25, // Defaults to '25'
+        // "margin-left": 25, // Defaults to '25'
+        // "margin-bottom": 25, // Defaults to '25'
+        // "format": "A4", // Defaults to A4, options: A3, A4, A5, Legal, Letter, Tabloid
+        // "height": "1000px", // allowed units: mm, cm, in, px
+        // "width": "500px", // allowed units: mm, cm, in, px
+        // "orientation": "landscape", // portrait or landscape, defaults to portrait
+    },
+    // Translate your invoice to your preferred language
+    "translate": {
+        // "invoice": "FACTUUR",  // Default to 'INVOICE'
+        // "number": "Nummer", // Defaults to 'Number'
+        // "date": "Datum", // Default to 'Date'
+        // "due-date": "Verloopdatum", // Defaults to 'Due Date'
+        // "subtotal": "Subtotaal", // Defaults to 'Subtotal'
+        // "products": "Producten", // Defaults to 'Products'
+        // "quantity": "Aantal", // Default to 'Quantity'
+        // "price": "Prijs", // Defaults to 'Price'
+        // "product-total": "Totaal", // Defaults to 'Total'
+        // "total": "Totaal", // Defaults to 'Total'
+        // "vat": "btw" // Defaults to 'vat'
+    },
+};
     console.log(data);
-    res.send({ status: true, message: "data fetched ", data: data });
+   var pdfLink=''
+    easyinvoice.createInvoice(data1, function (result) {
+      //The response will contain a base64 encoded PDF file
+   
+      console.log('PDF base64 string: ', result.pdf);
+     
+      pdfLink = result.pdf
+
+      res.send({ status: true, message: "data fetched ", data: data , pdfLink:pdfLink});
+  });
+
+    
   } catch (err) {
     console.log(err);
     res.send({ status: false, message: err.message, data: null });
