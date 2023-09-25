@@ -9,6 +9,7 @@ const RetailerSchema = new mongoose.Schema(
     city: { type: String, default: "" },
     area: { type: String, default: "" },
     state: { type: String, default: "" },
+    email: { type: String, default: "" },
     phonenumber: { type: String, default: "" },
     password: { type: String, default: "" },
     pharname: { type: String, default: "" },

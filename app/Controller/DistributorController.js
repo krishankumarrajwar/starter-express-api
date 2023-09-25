@@ -12,6 +12,8 @@ const Order = require("../Models/Order");
 
 const Upload = require("../Middleware/upload");
 
+
+
 // login function
 module.exports.distributor_login = async (req, resp) => {
   // create jwt token
@@ -556,7 +558,7 @@ module.exports.product_search = async (req, res) => {
 const { rm } = require("fs/promises");
 const payout = require("../Models/payout");
 const { off } = require("process");
-var easyinvoice = require('easyinvoice');
+// var easyinvoice = require('easyinvoice');
 
 module.exports.get_invoice = async (req, res) => {
   try {
@@ -687,15 +689,17 @@ module.exports.get_invoice = async (req, res) => {
 };
     console.log(data);
    var pdfLink=''
-    easyinvoice.createInvoice(data1, function (result) {
-      //The response will contain a base64 encoded PDF file
+  //   easyinvoice.createInvoice(data1, function (result) {
+  //     //The response will contain a base64 encoded PDF file
    
-      console.log('PDF base64 string: ', result.pdf);
+  //     console.log('PDF base64 string: ', result.pdf);
      
-      pdfLink = result.pdf
+  //     pdfLink = result.pdf
 
-      res.send({ status: true, message: "data fetched ", data: data , pdfLink:pdfLink});
-  });
+      
+  // });
+
+  res.send({ status: true, message: "data fetched ", data: data , pdfLink:pdfLink});
 
 
     
