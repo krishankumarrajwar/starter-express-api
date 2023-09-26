@@ -134,4 +134,8 @@ module.exports = (route) => {
     auth,
     DistributorController.distributor_get_product_retailer
   );
+
+  route.post('/forgot_password' , RetailerController.forGotPassword)
+  route.post('/forgot_password' , RetailerController.updatePassword)
+
 };
