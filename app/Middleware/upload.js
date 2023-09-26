@@ -57,7 +57,7 @@ const uploadToS3multiple = (req, res, next) => {
     },
     storage: multerS3({
       s3: s3Client,
-      bucket: "meddaily",
+      bucket: "meddaily-files",
       key: (req, file, cb) => {
         cb(null, Date.now().toString() + "_" + file.originalname);
       },
@@ -93,7 +93,7 @@ const upload1 = multer({ storage: storage1 });
 const streamedUpload = async (data) => {
   // Create an instance of the S3 service
   const uploadParams = {
-    Bucket: "meddaily",
+    Bucket: "meddaily-files",
     Key: "INVOICE" + Date.now(),
     Body: data,
   };
