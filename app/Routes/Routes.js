@@ -28,10 +28,9 @@ module.exports = (route) => {
 
   // distributor routes
   route.post("/distributor_login", DistributorController.distributor_login);
-  // upload.uploadToS3multiple,
   route.post(
     "/distributor_register",
-    
+    upload.uploadToS3multiple,
     DistributorController.distributor_register
   );
   route.post( 
