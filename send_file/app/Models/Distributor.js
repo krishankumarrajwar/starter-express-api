@@ -1,11 +1,9 @@
 const mongoose =  require("mongoose");
-const bcrypt = require("bcrypt");
-
 const DistributorSchema = new mongoose.Schema(
   {
     firstname: { type: String, default: "" },
     lastname: { type: String, default: "" },
-    phonenumber: { type: String, default: "",unique:true },
+    phonenumber: { type: String, default: "" },
     email: { type: String, default: "" },
     pincode: { type: String, default: "" },
     city: { type: String, default: "" },
@@ -24,26 +22,10 @@ const DistributorSchema = new mongoose.Schema(
     benificiary_name: String,
     account_number: String,
     ifsc_code: String,
-  
   },
   {
     timestamps: true,
   }
 );
-
-// Hash password before saving
-DistributorSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const hashedPassword = await bcrypt.hash(this.password, 10);
-    this.password = hashedPassword;
-    next();
-  } catch (error) {
-    return next(error);
-  }
-});
-
 
 module.exports = mongoose.model("distributor",DistributorSchema);

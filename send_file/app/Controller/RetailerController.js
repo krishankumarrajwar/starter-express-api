@@ -19,103 +19,60 @@ const base64json = require('base64json');
 const axios = require('axios');
 var sha256 = require('js-sha256').sha256;
 const nodemailer = require('./nodemailer')
-const bcrypt = require("bcrypt");
 
 
 require("dotenv").config();
 
 // login function
 module.exports.retailer_login = async (req, resp) => {
+  // create jwt token
+  console.log(req.body);
   const { phone, password } = req.body;
-
-  if (!phone || !password) {
-    return resp.status(400).json({ status: 400, success: false, message: 'Please enter your phone and password.' });
-  }
-
-  try {
-    const findRetailer = await Retailer.findOne({ phonenumber: phone });
-
-    if (!findRetailer) {
-      return resp.status(404).json({ status: 404, success: false, message: 'This user does not exist. Please sign up.' });
-    }else if (findRetailer.verify === 'false') {
-      return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected. Please contact customer support for more information." });
-    } else{
-
-    const passwordMatch = await bcrypt.compare(password, findRetailer.password);
-
-    if (passwordMatch) {
-      const jwtToken = generateUsertoken(findRetailer);
-      const saveToken = new token({ token: jwtToken });
+  await Retailer.findOne({
+    phonenumber: phone,
+    password: password,
+  }).then(async (result) => {
+    console.log(result)
+    if (result != null) {
+      const jwt = generateUsertoken(result);
+      let saveToken = new token({ token: jwt });
       await saveToken.save();
-
-      return resp.status(200).json({
-        status: 200,
-        success: true,
-        message: 'You have been logged in successfully!',
-        data: findRetailer,
-        Token: jwtToken,
+      resp.json({
+        status: true,
+        message: "login successful",
+        data: result,
+        token: jwt,
       });
     } else {
-      return resp.status(401).json({ status: 401, success: false, message: 'Wrong phone number or password.' });
+      resp.json({ status: false, message: "login unsuccessful" });
     }
-  }
-  } catch (error) {
-    console.log(error)
-    return resp.status(500).json({ status: 500, success: false, message: 'Internal server error.' });
-  }
-  // create jwt token
-  // console.log(req.body);
-  // const { phone, password } = req.body;
-  // await Retailer.findOne({
-  //   phonenumber: phone,
-  //   password: password,
-  // }).then(async (result) => {
-  //   console.log(result)
-  //   if (!result) {
-  //     const jwt = generateUsertoken(result);
-  //     let saveToken = new token({ token: jwt });
-  //     await saveToken.save();
-  //     resp.json({
-  //       status: true,
-  //       message: "login successful",
-  //       data: result,
-  //       token: jwt,
-  //     });
-  //   } else {
-  //     resp.json({ status: false, message: "login unsuccessful" });
-  //   }
-  // });
+  });
 };
-
 
 // get user details using token
 module.exports.retailer_register = async (req, resp) => {
-  try {
-    const retailer = await Retailer.findOne({ phonenumber: req.body.phonenumber });
-
-    if (retailer && retailer.verify === "false") {
-      // Retailer has been rejected by admin
-      return resp.status(401).json({ status: false, message: "Your request has been rejected by the admin. Please contact customer support for more information." });
-    } else if (retailer) {
-      // Retailer is already registered or under verification
-      return resp.status(400).json({ status: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
-    } else {
-      // registration
-      const data = req.body;
-      const retailerData = new Retailer(data);
-      const retailer_data = await retailerData.save();
-      return resp.status(201).json({ status: true, message: "Retailer signup successful", data: retailer_data });
+  await Retailer.findOne({ phonenumber: req.body.phonenumber }).then((user) => {
+    if (user != null) {
+     return resp.send({ status: false, message: "Retailer already exist" });
     }
-  } catch (error) {
-    console.error(error);
-    return resp.status(500).json({ status: 500, success: false, message: "Internal server error." });
-  }
+  });
+
+  var data = req.body;
+
+  console.log('data',data)
+
+  console.log('req.files',req.files)
+  // data.licenseimage = req.files["image1"].location;
+  // data.gstimage = req.files["image2"].location;
+  const retailer = new Retailer(data);
+  const retailer_data = await retailer.save();
+  // // console.log(retailer_data);
+  resp.send({ status: true, message: "Retailer signup successfull" });
 };
 
-
-
 // update user details
-module.exports.retailer_update = async (req, resp) => { 
+module.exports.retailer_update = async (req, resp) => {
+  console.log(req.body);
   var data = req.body;
 
   await Retailer.findOneAndUpdate(
@@ -515,36 +472,19 @@ module.exports.retailer_request = async (req, res) => {
 };
 
 module.exports.retailer_approve = async (req, res) => {
-  const retailerId = req.body.retailerId; 
-  try {
-    const retailer = await Retailer.findByIdAndUpdate(retailerId, { verify: true }, { new: true });
-    if (!retailer) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Retailer not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Retailer Approved successfully.' ,data:retailer});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to approved Retailer.' });
-  }
+  await Retailer.findOneAndUpdate(
+    { _id: req.body.id },
+    { verify: true },
+    { new: true }
+  )
+    .then((result) => {
+      res.send({ status: true, message: "Retailer Approved", data: result });
+    })
+    .catch((err) => {
+      res.send({ status: false, message: err });
+      console.log(err);
+    });
 };
-
-exports.retailer_reject = async (req, res) => {
-  const retailerId = req.body.retailerId; 
-  try {
-    const retailer = await Retailer.findByIdAndUpdate(retailerId, { verify: false }, { new: true });
-    if (!retailer) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Retailer not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Retailer Rejected successfully.' ,data:retailer});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to rejected Retailer.' });
-  }
-};
-
-
 
 module.exports.retailer_detail = async (req, res) => {
   await Retailer.findOne({ _id: req.body.id })
@@ -629,20 +569,17 @@ module.exports.checkout = async (req, res) => {
 };
 
 module.exports.my_order = async (req, res) => {
-  await Order.find({ retailer_id: req.user._id }).sort({ createdAt: -1 })
-    .then((order) => {
-      if(!order || order.length===0){
-         return res.status(404).json({ status: false, message: "No orders found for this retailer." });
-      }
-      
-      res.status(200).json({ status: true, message: "My Order", data: order });
+  await Order.find({ retailer_id: req.user._id })
+    .sort({ createdAt: -1 })
+    .then((result) => {
+      res.send({ status: true, message: "My Order", data: result });
     })
     .catch((err) => {
-      return res.send({ status: false, message: err });
+      res.send({ status: false, message: err });
       console.log(err);
-    }); 
+    });
 };
- 
+
 module.exports.return_order = async (req, res) => {
   console.log("called");
   var id = req.body.order_id;

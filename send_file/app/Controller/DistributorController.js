@@ -3,7 +3,6 @@ const Retailer = require("../Models/Retailer");
 const Payout = require("../Models/payout");
 const mongodb = require("mongodb");
 const Product = require("../Models/Product");
-const bcrypt = require("bcrypt");
 
 const generateUsertoken = require("../Common/common.js");
 const fs = require("fs");
@@ -17,120 +16,55 @@ const Upload = require("../Middleware/upload");
 
 // login function
 module.exports.distributor_login = async (req, resp) => {
+  // create jwt token
+  console.log(req.body);
   const { phone, password } = req.body;
-
-  if (!phone || !password) {
-    return resp.status(400).json({ status: 400, success: false, message: 'Please enter your phone and password.' });
-  }
-
-  try {
-    const findDistributor = await Distributor.findOne({ phonenumber: phone });
-
-   
-    if (!findDistributor) {
-      return resp.status(404).json({ status: 404, success: false, message: 'This user does not exist. Please sign up.' });
-    } else if (findDistributor.verify === 'false') {
-      return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected. Please contact customer support for more information." });
-    } else {
-      const passwordMatch = await bcrypt.compare(password, findDistributor.password);
-
-      if (passwordMatch) {
-        const jwtToken = generateUsertoken(findDistributor);
-        const saveToken = new token({ token: jwtToken });
+  await Distributor.findOne({ phonenumber: phone, password: password }).then(
+    async (result) => {
+      console.log(result);
+      if (result != null) {
+        const jwt = generateUsertoken(result);
+        let saveToken = new token({ token: jwt });
         await saveToken.save();
-
-        return resp.status(200).json({
-          status: 200,
-          success: true,
-          message: 'You have been logged in successfully!',
-          data: findDistributor,
-          Token: jwtToken,
+        resp.json({
+          status: true,
+          message: "login successful",
+          data: result,
+          token: jwt,
         });
       } else {
-        return resp.status(401).json({ status: 401, success: false, message: 'Wrong phone number or password.' });
+        resp.json({ status: false, message: "login unsuccessful" });
       }
     }
-  } catch (error) {
-    console.log(error);
-    return resp.status(500).json({ status: 500, success: false, message: 'Internal server error.' });
-  }
+  );
 };
-
-
-// // get user details using token
-// module.exports.distributor_register = async (req, resp) => {
-//   await Distributor.findOne({ phonenumber: req.body.phonenumber }).then(
-//     async (user) => {
-//       if(user){
-//         if (user && user.verify==="false") {
-//           // Distributor has been rejected by admin
-//           return resp.json({ status: false, message: "Your request has been rejected. Please contact customer support for more information." });
-//         } else if(user) {
-//           // Distributor is already registered or under verification
-//           return resp.json({ status: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
-
-//         }
-
-//       }
-//       else {
-//         var data = req.body; 
-//         // console.log("file location", req.files["image1"][0].location);
-//         data["gst_file"] = req.files["image1"][0].location;
-//         data["image"] = req.files["image2"][0].location;
-//         console.log(data);
-
-//         const retailer = new Distributor(data);
-//         console.log("==========================>>>>>>>>>>>>", req.files); 
-//         console.log(retailer);
-//         const retailer_data = await retailer.save();
-//         // console.log(retailer_data);
-//         resp.send({ status: true, message: "Distributor signup successfully" ,data:retailer_data});
-//       }
-//     }
-//   );
-// };
-
-
-
-
 
 // get user details using token
 module.exports.distributor_register = async (req, resp) => {
-  try {
-    const existingUser = await Distributor.findOne({ phonenumber: req.body.phonenumber });
-
-    if (existingUser) {
-      if (existingUser.verify === false) {
-        // Distributor has been rejected by admin
-        return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected by the admin. Please contact customer support for more information." });
+  await Distributor.findOne({ phonenumber: req.body.phonenumber }).then(
+    async (user) => {
+      if (user != null) {
+        return resp.send({
+          status: false,
+          message: "Distributor already exist",
+        });
       } else {
-        // Distributor is already registered or under verification
-        return resp.status(400).json({ status: 400, success: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
+        var data = req.body;
+        console.log("file location", req.files["image1"][0].location);
+        data["gst_file"] = req.files["image1"][0].location;
+        data["image"] = req.files["image2"][0].location;
+        console.log(data);
+
+        const retailer = new Distributor(data);
+        console.log("==========================>>>>>>>>>>>>", req.files);
+        console.log(retailer);
+        const retailer_data = await retailer.save();
+        // console.log(retailer_data);
+        resp.send({ status: true, message: "Distributor signup successfull" });
       }
-    } else {
-      // Registration
-      const data = req.body;
-      data["gst_file"] = req.files["image1"][0].location;
-      data["image"] = req.files["image2"][0].location;
-
-      const retailer = new Distributor(data);
-      const retailer_data = await retailer.save();
-
-      return resp.status(201).json({ status: 201, success: true, message: "Distributor signup successful", data: retailer_data });
     }
-  } catch (error) {
-    console.error(error);
-    return resp.status(500).json({ status: 500, success: false, message: "Internal server error." });
-  }
+  );
 };
-
-
-
-
-
-
-
-
 
 // update user details
 module.exports.distributor_update = async (req, resp) => {
@@ -206,38 +140,19 @@ module.exports.distributor_detail = async (req, res) => {
 };
 
 module.exports.distributor_approve = async (req, res) => {
-  const distributorId = req.body.distributorId; 
-  try {
-    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: true }, { new: true });
-    if (!distributor) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Distributor Approved successfully.' ,data:distributor});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to approved distributor.' });
-  }
+  await Distributor.findOneAndUpdate(
+    { _id: req.body.id },
+    { verify: true },
+    { new: true }
+  )
+    .then((result) => {
+      res.send({ status: true, message: "Distributor Approved", data: result });
+    })
+    .catch((err) => {
+      res.send({ status: false, message: err });
+      console.log(err);
+    });
 };
-
-exports.distributor_reject = async (req, res) => {
-  const distributorId = req.body.distributorId; 
-  try {
-    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: false }, { new: true });
-    if (!distributor) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Distributor Rejected successfully.' ,data:distributor});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to reject distributor.' });
-  }
-};
-
-
-
-
 
 module.exports.distributor_request = async (req, res) => {
   await Distributor.find(
@@ -280,24 +195,25 @@ module.exports.distributor_get_product = async (req, res) => {
 };
 
 module.exports.distributor_order = async (req, res) => {
-  await Order.find({distributor_id: req.user._id, return_status: 0 }) //distributor_id: req.user._id, 
+  await Order.find({ distributor_id: req.user._id, return_status: 0 })
     .sort({ createdAt: -1 })
     .then(async (result) => {
       const mappedResults = await Promise.all(
         result.map(async (e) => {
-          let distributerName = await Distributor.findOne({_id: e.distributor_id});
-          let retailerName = await Retailer.findOne({ _id: e.retailer_id});
-    
-          // Add distributor and retailer names
-          const orderWithNames = {
-            ...e.toObject(), // Convert  order to  plain JavaScript object
-            distributor_name: `${distributerName.firstname} ${distributerName.lastname}`,
-            retailer_name: retailerName.ownername,
-          };
-  
-          return orderWithNames;
-          
-        }) 
+          let distributerName = await Distributor.findOne({
+            _id: e.distributor_id,
+          });
+          let retailerName = await Retailer.findOne({
+            _id: e.retailer_id,
+          });
+          e.distributor_name =
+            distributerName.firstname + " " + distributerName.lastname;
+          e.retailer_name = retailerName.ownername;
+
+          console.log('retailerName', retailerName)
+          // e = {...e, "retailerName": retailerName , "distributerName":distributerName  }
+          return e;
+        })
       );
       res.send({ status: true, message: "My Order", data: mappedResults });
     })
@@ -364,7 +280,7 @@ module.exports.create_payout = async (req, res) => {
   }
 };
 const mongoose = require("mongoose");
-module.exports.create_invoice = async (req, res) => { 
+module.exports.create_invoice = async (req, res) => {
   try {
     let { batch_no, exp_date, order_id } = req.body;
     let getOrder = await Order.findOne({ order_id: order_id });
@@ -401,7 +317,7 @@ module.exports.my_inventory = async (req, res) => {
   Product.aggregate([
     { $match: { "distributors.distributorId": distributorId } },
     {
-      $project: { 
+      $project: {
         _id: 1,
         title: 1,
         sub_title: 1,
@@ -970,6 +886,4 @@ module.exports.distributor_get_product_retailer = async (req, res) => {
     res.send({ status: false, message: err.message, data: null });
   }
 };
-
-
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>
