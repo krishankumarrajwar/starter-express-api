@@ -4,6 +4,7 @@ const RetailerSchema = new mongoose.Schema(
     businesstype: { type: String, default: "" },
     businessname: { type: String, default: "" },
     ownername: { type: String, default: "" },
+    email: { type: String, default: "" },
     address: { type: String, default: "" },
     pincode: { type: String, default: "" },
     city: { type: String, default: "" },

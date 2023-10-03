@@ -381,7 +381,7 @@ module.exports.add_to_cart = async (req, res) => {
 // };
 
 module.exports.get_cart = async (req, res) => {
-  var cart = await Cart.find({ user_id: req.user._id })
+  Cart.find({ user_id: req.user._id })
     .then(async (item) => {
       console.log("cart values", item); // Log the fetched items
       var arr = [];
@@ -390,18 +390,19 @@ module.exports.get_cart = async (req, res) => {
         var product = await Product.findOne({ _id: item[i].product_id }).catch((err) => {
           console.error("Error fetching product:", err);
         });
-        var dis = product.distributors.filter(
+        console.log("Entering ther product", product);
+        var dis = product?.distributors.filter(
           (pro) => pro.distributorId == item[i].distributor_id
         );
         console.log("distributer lol", dis);
         var obj = {
-          _id: item[i]._id,
-          product_id: item[i].product_id,
-          product_name: product.title,
-          distributor_name: dis[0].distributorName,
-          distributor_id: dis[0].distributorId,
-          price: dis[0].price,
-          quantity: item[i].quantity,
+          _id: item[i]?._id,
+          product_id: item[i]?.product_id,
+          product_name: product?.title,
+          distributor_name: dis[0]?.distributorName,
+          distributor_id: dis[0]?.distributorId,
+          price: dis[0]?.price,
+          quantity: item[i]?.quantity,
         };
         arr.push(obj);
         console.log("object xoxoxo",obj); 
@@ -413,6 +414,7 @@ module.exports.get_cart = async (req, res) => {
       });
     })
     .catch((err) => {
+      console.log(err)
       res.send({
         status: false,
         message: err,
@@ -433,6 +435,7 @@ module.exports.update_cart = async (req, res) => {
       });
     })
     .catch((err) => {
+      console.log(err)
       res.send({
         status: false,
         message: err,
