@@ -11,6 +11,9 @@ const generateUsertoken = require("../Common/common.js");
 const fs = require("fs");
 const e = require("cors");
 const token = require("../Models/token");
+const nodemailer = require('./nodemailer')
+const bcrypt = require("bcrypt");
+
 
 require("dotenv").config();
 
@@ -823,6 +826,63 @@ exports.retailer_reject = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to rejected Retailer.' });
   }
 };
+
+module.exports.forGotPassword = async  (req,res,next)=>{
+
+
+  var user = await Retailer.findOne({email:req.body.email})
+
+  
+
+   if(user){
+    var val = Math.floor(1000 + Math.random() * 9000);
+
+    nodemailer.sendEmail({
+      from:"admin@meddaily.in",
+      to:req.body.email,
+      subject:"OTP Verification",
+      text:"Hi your one time password is "+ val
+     })
+
+    res.send({status: true, otp: val})
+   }else{
+    res.send({
+      status: false, message: "user is not valid, please enter valid email"
+    })
+   }
+   
+
+   
+
+
+
+
+
+
+
+
+}
+
+module.exports.updatePassword = async  (req,res,next)=>{
+
+
+  var user = await Retailer.findOne({email:req.body.email})
+
+  
+
+   if(user){
+  
+    var UpdateUser = await Retailer.findOneAndUpdate({email:req.body.email}, {$set:{password:req.body.password}})
+
+    res.send({status: true, message:"Password updated successfully"})
+   }else{
+    res.send({
+      status: false, message: "user is not valid, please enter valid email"
+    })
+   }
+
+
+}
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>
 
 
