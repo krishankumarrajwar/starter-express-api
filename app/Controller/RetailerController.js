@@ -289,6 +289,7 @@ module.exports.product_details = async (req, res) => {
 
 module.exports.add_to_cart = async (req, res) => {
   await Cart.findOne({ user_id: req.user._id }).then(async (cartdata) => {
+    console.log("is cart data coming ?", cartdata);
     if (cartdata != null) {
       if (
         cartdata.distributor_id == req.body.distributor_id &&
@@ -296,7 +297,7 @@ module.exports.add_to_cart = async (req, res) => {
       ) {
         return res.send({
           status: true,
-          message: "Item already in cart",
+          message: "Item already in cart",f
         });
       } else if (cartdata.distributor_id != req.body.distributor_id) {
         return res.send({
@@ -342,15 +343,57 @@ module.exports.add_to_cart = async (req, res) => {
   });
 };
 
+// module.exports.get_cart = async (req, res) => {
+//   var cart = await Cart.find({ user_id: req.user._id })
+//     .then(async (item) => {
+//       console.log("cart values xoxoxo", item)
+//       var arr = [];
+//       for (var i = 0; i < item.length; i++) {
+//         var product = await Product.findOne({ _id: item[i].product_id });
+//         var dis = product.distributors.filter(
+//           (pro) => pro.distributorId == item[0].distributor_id
+//         );
+//         var obj = {
+//           _id: item[i]._id,
+//           product_id: item[i].product_id,
+//           product_name: product.title,
+//           distributor_name: dis[0].distributorName,
+//           distributor_id: dis[0].distributorId,
+//           price: dis[0].price,
+//           quantity: item[i].quantity,
+//         };
+//         arr.push(obj);
+//         console.log("obj xoxoxoxo",obj);
+//       }
+      
+//       res.send({
+//         status: true,
+//         data: arr,
+//         message: "cart data show successfull",
+//       });
+//     })
+//     .catch((err) => {
+//       res.send({
+//         status: false,
+//         message: err,
+//       });
+//     });
+// };
+
 module.exports.get_cart = async (req, res) => {
   var cart = await Cart.find({ user_id: req.user._id })
     .then(async (item) => {
+      console.log("cart values", item); // Log the fetched items
       var arr = [];
       for (var i = 0; i < item.length; i++) {
-        var product = await Product.findOne({ _id: item[i].product_id });
+        console.log("Entering ther loop");
+        var product = await Product.findOne({ _id: item[i].product_id }).catch((err) => {
+          console.error("Error fetching product:", err);
+        });
         var dis = product.distributors.filter(
-          (pro) => pro.distributorId == item[0].distributor_id
+          (pro) => pro.distributorId == item[i].distributor_id
         );
+        console.log("distributer lol", dis);
         var obj = {
           _id: item[i]._id,
           product_id: item[i].product_id,
@@ -361,12 +404,12 @@ module.exports.get_cart = async (req, res) => {
           quantity: item[i].quantity,
         };
         arr.push(obj);
+        console.log("object xoxoxo",obj); 
       }
-      console.log(obj);
       res.send({
         status: true,
         data: arr,
-        message: "cart data show successfull",
+        message: "cart data show successfully",
       });
     })
     .catch((err) => {
@@ -376,7 +419,6 @@ module.exports.get_cart = async (req, res) => {
       });
     });
 };
-
 module.exports.update_cart = async (req, res) => {
   await Cart.findOneAndUpdate(
     { _id: req.body.cart_id },
@@ -474,7 +516,7 @@ module.exports.checkout = async (req, res) => {
     let distributorId;
     console.log("reqdata==========>", req.body);
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
-      var len = cartdata.length;
+      var len = cartdata?.length;
 
       distributorId = cartdata[0].distributor_id;
       for (var i = 0; i < len; i++) {
