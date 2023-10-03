@@ -271,17 +271,17 @@ module.exports.product_details = async (req, res) => {
   }
 
   var product = {
-    name: pro.title,
-    subname: pro.sub_title,
-    description: pro.description,
-    price: distributor_data[0].price,
-    stock: distributor_data[0].stock,
-    applicable_tax: pro.applicable_tax,
+    name: pro?.title,
+    subname: pro?.sub_title,
+    description: pro?.description,
+    price: distributor_data[0]?.price,
+    stock: distributor_data[0]?.stock,
+    applicable_tax: pro?.applicable_tax,
   };
 
   res.send({
-    product: product,
-    distributor: distributor_data,
+    product: pro,
+    distributor: pro?.distributors,
     status: true,
     message: "Product data show successfull",
   });
