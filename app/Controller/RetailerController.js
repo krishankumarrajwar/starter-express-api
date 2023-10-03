@@ -809,7 +809,20 @@ module.exports.cancel_order_admin = async (req, res) => {
 };
 
 
-
+exports.retailer_reject = async (req, res) => {
+  const retailerId = req.body.retailerId; 
+  try {
+    const retailer = await Retailer.findByIdAndUpdate(retailerId, { verify: false }, { new: true });
+    if (!retailer) {
+      // Check if the distributor was not found
+      return res.status(404).json({ success: false, message: 'Retailer not found.' });
+    }
+    res.status(200).json({ success: true, message: 'Retailer Rejected successfully.' ,data:retailer});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to rejected Retailer.' });
+  }
+};
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>
 
 

@@ -779,4 +779,19 @@ module.exports.distributor_get_product_retailer = async (req, res) => {
     res.send({ status: false, message: err.message, data: null });
   }
 };
+
+exports.distributor_reject = async (req, res) => {
+  const distributorId = req.body.distributorId; 
+  try {
+    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: false }, { new: true });
+    if (!distributor) {
+      // Check if the distributor was not found
+      return res.status(404).json({ success: false, message: 'Distributor not found.' });
+    }
+    res.status(200).json({ success: true, message: 'Distributor Rejected successfully.' ,data:distributor});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to reject distributor.' });
+  }
+};
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>
