@@ -10,7 +10,6 @@ var upload = multer({
       console.log(req.file);
         cb(null,"images/");
      },
-     
      filename:function(req,file,cb){
         cb(null,Date.now()+file.originalname);
      }

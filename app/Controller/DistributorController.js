@@ -3,134 +3,66 @@ const Retailer = require("../Models/Retailer");
 const Payout = require("../Models/payout");
 const mongodb = require("mongodb");
 const Product = require("../Models/Product");
-const bcrypt = require("bcrypt");
 
 const generateUsertoken = require("../Common/common.js");
 const fs = require("fs");
 require("dotenv").config();
 const token = require("../Models/token");
 const Order = require("../Models/Order");
-
+// let easyinvoice = require("easyinvoice");
 const Upload = require("../Middleware/upload");
-
-
 
 // login function
 module.exports.distributor_login = async (req, resp) => {
+  // create jwt token
+  console.log(req.body);
   const { phone, password } = req.body;
-
-  if (!phone || !password) {
-    return resp.status(400).json({ status: 400, success: false, message: 'Please enter your phone and password.' });
-  }
-
-  try {
-    const findDistributor = await Distributor.findOne({ phonenumber: phone });
-
-   
-    if (!findDistributor) {
-      return resp.status(404).json({ status: 404, success: false, message: 'This user does not exist. Please sign up.' });
-    } else if (findDistributor.verify === 'false') {
-      return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected. Please contact customer support for more information." });
-    } else {
-      const passwordMatch = await bcrypt.compare(password, findDistributor.password);
-
-      if (passwordMatch) {
-        const jwtToken = generateUsertoken(findDistributor);
-        const saveToken = new token({ token: jwtToken });
+  await Distributor.findOne({ phonenumber: phone, password: password }).then(
+    async (result) => {
+      console.log(result);
+      if (result != null) {
+        const jwt = generateUsertoken(result);
+        let saveToken = new token({ token: jwt });
         await saveToken.save();
-
-        return resp.status(200).json({
-          status: 200,
-          success: true,
-          message: 'You have been logged in successfully!',
-          data: findDistributor,
-          Token: jwtToken,
+        resp.json({
+          status: true,
+          message: "login successful",
+          data: result,
+          token: jwt,
         });
       } else {
-        return resp.status(401).json({ status: 401, success: false, message: 'Wrong phone number or password.' });
+        resp.json({ status: false, message: "login unsuccessful" });
       }
     }
-  } catch (error) {
-    console.log(error);
-    return resp.status(500).json({ status: 500, success: false, message: 'Internal server error.' });
-  }
+  );
 };
-
-
-// // get user details using token
-// module.exports.distributor_register = async (req, resp) => {
-//   await Distributor.findOne({ phonenumber: req.body.phonenumber }).then(
-//     async (user) => {
-//       if(user){
-//         if (user && user.verify==="false") {
-//           // Distributor has been rejected by admin
-//           return resp.json({ status: false, message: "Your request has been rejected. Please contact customer support for more information." });
-//         } else if(user) {
-//           // Distributor is already registered or under verification
-//           return resp.json({ status: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
-
-//         }
-
-//       }
-//       else {
-//         var data = req.body; 
-//         // console.log("file location", req.files["image1"][0].location);
-//         data["gst_file"] = req.files["image1"][0].location;
-//         data["image"] = req.files["image2"][0].location;
-//         console.log(data);
-
-//         const retailer = new Distributor(data);
-//         console.log("==========================>>>>>>>>>>>>", req.files); 
-//         console.log(retailer);
-//         const retailer_data = await retailer.save();
-//         // console.log(retailer_data);
-//         resp.send({ status: true, message: "Distributor signup successfully" ,data:retailer_data});
-//       }
-//     }
-//   );
-// };
-
-
-
-
 
 // get user details using token
 module.exports.distributor_register = async (req, resp) => {
-  try {
-    const existingUser = await Distributor.findOne({ phonenumber: req.body.phonenumber });
-
-    if (existingUser) {
-      if (existingUser.verify === false) {
-        // Distributor has been rejected by admin
-        return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected by the admin. Please contact customer support for more information." });
+  await Distributor.findOne({ phonenumber: req.body.phonenumber }).then(
+    async (user) => {
+      if (user != null) {
+        return resp.send({
+          status: false,
+          message: "Distributor already exist",
+        });
       } else {
-        // Distributor is already registered or under verification
-        return resp.status(400).json({ status: 400, success: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
+        var data = req.body;
+        console.log("file location", req.files["image1"][0].location);
+        data["gst_file"] = req.files["image1"][0].location;
+        data["image"] = req.files["image2"][0].location;
+        console.log(data);
+
+        const retailer = new Distributor(data);
+        console.log("==========================>>>>>>>>>>>>", req.files);
+        console.log(retailer);
+        const retailer_data = await retailer.save();
+        // console.log(retailer_data);
+        resp.send({ status: true, message: "Distributor signup successfull" });
       }
-    } else {
-      // Registration
-      const data = req.body;
-      data["gst_file"] = req.files["image1"][0].location;
-      data["image"] = req.files["image2"][0].location;
-
-      const retailer = new Distributor(data);
-      const retailer_data = await retailer.save();
-
-      return resp.status(201).json({ status: 201, success: true, message: "Distributor signup successful", data: retailer_data });
     }
-  } catch (error) {
-    console.error(error);
-    return resp.status(500).json({ status: 500, success: false, message: "Internal server error." });
-  }
+  );
 };
-
-
-
-
-
-
-
-
 
 // update user details
 module.exports.distributor_update = async (req, resp) => {
@@ -206,38 +138,19 @@ module.exports.distributor_detail = async (req, res) => {
 };
 
 module.exports.distributor_approve = async (req, res) => {
-  const distributorId = req.body.distributorId; 
-  try {
-    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: true }, { new: true });
-    if (!distributor) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Distributor Approved successfully.' ,data:distributor});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to approved distributor.' });
-  }
+  await Distributor.findOneAndUpdate(
+    { _id: req.body.id },
+    { verify: true },
+    { new: true }
+  )
+    .then((result) => {
+      res.send({ status: true, message: "Distributor Approved", data: result });
+    })
+    .catch((err) => {
+      res.send({ status: false, message: err });
+      console.log(err);
+    });
 };
-
-exports.distributor_reject = async (req, res) => {
-  const distributorId = req.body.distributorId; 
-  try {
-    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: false }, { new: true });
-    if (!distributor) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Distributor Rejected successfully.' ,data:distributor});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to reject distributor.' });
-  }
-};
-
-
-
-
 
 module.exports.distributor_request = async (req, res) => {
   await Distributor.find(
@@ -280,24 +193,22 @@ module.exports.distributor_get_product = async (req, res) => {
 };
 
 module.exports.distributor_order = async (req, res) => {
-  await Order.find({distributor_id: req.user._id, return_status: 0 }) //distributor_id: req.user._id, 
+  await Order.find({ distributor_id: req.user._id, return_status: 0 })
     .sort({ createdAt: -1 })
     .then(async (result) => {
       const mappedResults = await Promise.all(
         result.map(async (e) => {
-          let distributerName = await Distributor.findOne({_id: e.distributor_id});
-          let retailerName = await Retailer.findOne({ _id: e.retailer_id});
-    
-          // Add distributor and retailer names
-          const orderWithNames = {
-            ...e.toObject(), // Convert  order to  plain JavaScript object
-            distributor_name: `${distributerName.firstname} ${distributerName.lastname}`,
-            retailer_name: retailerName.ownername,
-          };
-  
-          return orderWithNames;
-          
-        }) 
+          let distributerName = await Distributor.findOne({
+            _id: e.distributor_id,
+          });
+          let retailerName = await Retailer.findOne({
+            _id: e.retailer_id,
+          });
+          e._doc.distributor_name =
+            distributerName.firstname + " " + distributerName.lastname;
+          e._doc.retailer_name = retailerName.ownername;
+          return e;
+        })
       );
       res.send({ status: true, message: "My Order", data: mappedResults });
     })
@@ -364,14 +275,14 @@ module.exports.create_payout = async (req, res) => {
   }
 };
 const mongoose = require("mongoose");
-module.exports.create_invoice = async (req, res) => { 
+module.exports.create_invoice = async (req, res) => {
   try {
     let { batch_no, exp_date, order_id } = req.body;
     let getOrder = await Order.findOne({ order_id: order_id });
-    // if (!getOrder) throw new Error("not found");
-    // if (getOrder.order_status == 1 || getOrder.order_status == 3) {
-    //   return res.send({ status: true, message: "order already completed" });
-    // }
+    if (!getOrder) throw new Error("not found");
+    if (getOrder.order_status == 1 || getOrder.order_status == 3) {
+      return res.send({ status: true, message: "order already completed" });
+    }
     console.log("===================>", getOrder);
     const objectId = getOrder.distributor_id;
     const idValue = objectId.valueOf();
@@ -401,7 +312,7 @@ module.exports.my_inventory = async (req, res) => {
   Product.aggregate([
     { $match: { "distributors.distributorId": distributorId } },
     {
-      $project: { 
+      $project: {
         _id: 1,
         title: 1,
         sub_title: 1,
@@ -642,8 +553,6 @@ module.exports.product_search = async (req, res) => {
 const { rm } = require("fs/promises");
 const payout = require("../Models/payout");
 const { off } = require("process");
-// var easyinvoice = require('easyinvoice');
-
 module.exports.get_invoice = async (req, res) => {
   try {
     let getOrder = await Order.findOne({ order_id: req.query.order_id });
@@ -657,136 +566,36 @@ module.exports.get_invoice = async (req, res) => {
     });
 
     var data = {
-      "client": {
-        "company": getRetailer.businessname,
-        "address": getRetailer.address,
-        "pin": getRetailer.pincode,
-        "city": getRetailer.city,
-        "gstno": getRetailer.gstno,
+      client: {
+        company: getRetailer.businessname,
+        address: getRetailer.address,
+        pin: getRetailer.pincode,
+        city: getRetailer.city,
+        gstno: getRetailer.gstno,
       },
-      "sender": {
-        "company": getDistributor.firstname + getDistributor.lastname,
-        "area": getDistributor.area,
-        "pin": getDistributor.pin,
-        "city": getDistributor.city,
-        "state": getDistributor.state,
+      sender: {
+        distributorName: getDistributor.firstname + getDistributor.lastname,
+        area: getDistributor.area,
+        pin: getDistributor.pin,
+        city: getDistributor.city,
+        state: getDistributor.state,
       },
 
-      "images": {
-        "logo": "https://meddaily.s3.ap-south-1.amazonaws.com/MEDDAILY-LOGO-inverted.png",
+      images: {
+        logo: "https://meddaily.s3.ap-south-1.amazonaws.com/MEDDAILY-LOGO-inverted.png",
       },
-      "products": getOrder.products,
-     " bottom-notice": "Kindly pay your invoice within 15 days.",
-      "settings": {
-        "currency": "INR",
+      products: getOrder.products,
+      bottomNotice: "Kindly pay your invoice within 15 days.",
+      settings: {
+        currency: "INR",
       },
-      "translate": {},
-      "customize": {
+      translate: {},
+      customize: {
         // "template": fs.readFileSync('template.html', 'base64') // Must be base64 encoded html
       },
     };
-
-    var data1 = {
-    // Customize enables you to provide your own templates
-    // Please review the documentation for instructions and examples
-    "customize": {
-        //  "template": fs.readFileSync('template.html', 'base64') // Must be base64 encoded html 
-    },
-    "images": {
-        // The logo on top of your invoice
-        "logo": "https://www.meddaily.in/static/media/MEDDAILY-LOGO-inverted.2279581fa4814f43a0b8.png",
-        // The invoice background
-        // "background": "https://www.meddaily.in/static/media/MEDDAILY-LOGO-inverted.2279581fa4814f43a0b8.png"
-    },
-    // Your own data
-    "sender": {
-        // "company": "Sample Corp",
-        // "address": "Sample Street 123",
-        // "zip": "1234 AB",
-        // "city": "Sampletown",
-        // "country": "Samplecountry"
-        "company": getDistributor?.firstname + getDistributor?.lastname,
-        "area": getDistributor?.area,
-        "pin": getDistributor?.pin,
-        "city": getDistributor?.city,
-        "state": getDistributor?.state,
-        //"custom1": "custom value 1",
-        //"custom2": "custom value 2",
-        //"custom3": "custom value 3"
-    },
-    // Your recipient
-    "client": {
-        // "company": "Client Corp",
-        // "address": "Clientstreet 456",
-        // "zip": "4567 CD",
-        // "city": "Clientcity",
-        // "country": "Clientcountry"
-        // "custom1": "custom value 1",
-        // "custom2": "custom value 2",
-        // "custom3": "custom value 3"
-        "company": getRetailer?.businessname,
-        "address": getRetailer?.address,
-        "pin": getRetailer?.pincode,
-        "city": getRetailer?.city,
-        // "gstno": getRetailer.gstno,
-    },
-    "information": {
-        // Invoice number
-        "number": Math.floor(new Date()),
-        // Invoice data
-        "date": new Date().toDateString(),
-        // Invoice due date
-        "due-date": new Date().toDateString()
-    },
-    // The products you would like to see on your invoice
-    // Total values are being calculated automatically
-    "products":  getOrder?.products,
-    // The message you would like to display on the bottom of your invoice
-    "bottom-notice": "Kindly pay your invoice within 15 days.",
-    // Settings to customize your invoice
-    "settings": {
-        "currency": "INR", // See documentation 'Locales and Currency' for more info. Leave empty for no currency.
-        // "locale": "nl-NL", // Defaults to en-US, used for number formatting (See documentation 'Locales and Currency')        
-        // "margin-top": 25, // Defaults to '25'
-        // "margin-right": 25, // Defaults to '25'
-        // "margin-left": 25, // Defaults to '25'
-        // "margin-bottom": 25, // Defaults to '25'
-        // "format": "A4", // Defaults to A4, options: A3, A4, A5, Legal, Letter, Tabloid
-        // "height": "1000px", // allowed units: mm, cm, in, px
-        // "width": "500px", // allowed units: mm, cm, in, px
-        // "orientation": "landscape", // portrait or landscape, defaults to portrait
-    },
-    // Translate your invoice to your preferred language
-    "translate": {
-        // "invoice": "FACTUUR",  // Default to 'INVOICE'
-        // "number": "Nummer", // Defaults to 'Number'
-        // "date": "Datum", // Default to 'Date'
-        // "due-date": "Verloopdatum", // Defaults to 'Due Date'
-        // "subtotal": "Subtotaal", // Defaults to 'Subtotal'
-        // "products": "Producten", // Defaults to 'Products'
-        // "quantity": "Aantal", // Default to 'Quantity'
-        // "price": "Prijs", // Defaults to 'Price'
-        // "product-total": "Totaal", // Defaults to 'Total'
-        // "total": "Totaal", // Defaults to 'Total'
-        // "vat": "btw" // Defaults to 'vat'
-    },
-};
     console.log(data);
-   var pdfLink=''
-  //   easyinvoice.createInvoice(data1, function (result) {
-  //     //The response will contain a base64 encoded PDF file
-   
-  //     console.log('PDF base64 string: ', result.pdf);
-     
-  //     pdfLink = result.pdf
-
-      
-  // });
-
-  res.send({ status: true, message: "data fetched ", data: data , pdfLink:pdfLink});
-
-
-    
+    res.send({ status: true, message: "data fetched ", data: data });
   } catch (err) {
     console.log(err);
     res.send({ status: false, message: err.message, data: null });
@@ -970,6 +779,4 @@ module.exports.distributor_get_product_retailer = async (req, res) => {
     res.send({ status: false, message: err.message, data: null });
   }
 };
-
-
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>

@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-
 const RetailerSchema = new mongoose.Schema(
   {
     businesstype: { type: String, default: "" },
@@ -11,8 +9,7 @@ const RetailerSchema = new mongoose.Schema(
     city: { type: String, default: "" },
     area: { type: String, default: "" },
     state: { type: String, default: "" },
-    email: { type: String, default: "" },
-    phonenumber: { type: String, default: "",unique:true },
+    phonenumber: { type: String, default: "" },
     password: { type: String, default: "" },
     pharname: { type: String, default: "" },
     pharphone: { type: String, default: "" },
@@ -28,21 +25,6 @@ const RetailerSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
-
 );
-
-
-RetailerSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const hashedPassword = await bcrypt.hash(this.password, 10);
-    this.password = hashedPassword;
-    next();
-  } catch (error) {
-    return next(error);
-  }
-});
 
 module.exports = mongoose.model("retailer", RetailerSchema);

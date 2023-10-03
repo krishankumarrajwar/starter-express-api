@@ -336,33 +336,3 @@ async function getAdminData(req){
     const InsertNew=await new_admin.save();
     return InsertNew;
 }
-
-
-// Approved or reject distributor signup
-exports.approveOrRejectDistributor = async (req, res) => {
-  const distributorId = req.params.distributorId;
-  const { status } = req.body;
-
-  try {
-    // Find the distributor by ID and update their status
-    const updatedDistributor = await Distributor.findByIdAndUpdate(
-      distributorId,
-      { status: status },
-      { new: true } 
-    );
-
-    if (!updatedDistributor) {
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
-    }
-
-    const approvalStatus = status === 'approved' ? 'Approved' : 'Rejected';
-
-    res.status(200).json({
-      success: true,
-      message: `Distributor ${approvalStatus} successfully.`,
-      data: updatedDistributor,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update distributor status.' });
-  }
-};

@@ -2,17 +2,17 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const s3Client = new S3Client({
-  region: "us-east-1",
+  region: "ap-south-1",
   credentials: {
-    accessKeyId: "AKIA3FXLXZCM36DUCS3P",
-    secretAccessKey: "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",
+    accessKeyId: "AKIAXDPC4O2ELKZNHDAX",
+    secretAccessKey: "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",
   },
 });
 
 const uploadToS3 = (req, res, next) => {
   const upload = multer({
     fileFilter: (req, file, cb) => {
-      const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+      const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg"];
 
       if (allowedMimeTypes.includes(file.mimetype)) {
         // Allow the file to be uploaded
@@ -24,7 +24,7 @@ const uploadToS3 = (req, res, next) => {
     },
     storage: multerS3({
       s3: s3Client,
-      bucket: "meddaily-files",
+      bucket: "meddaily",
       key: (req, file, cb) => {
         cb(null, Date.now().toString() + "_" + file.originalname);
       },
@@ -57,7 +57,7 @@ const uploadToS3multiple = (req, res, next) => {
     },
     storage: multerS3({
       s3: s3Client,
-      bucket: "meddaily-files",
+      bucket: "meddaily",
       key: (req, file, cb) => {
         cb(null, Date.now().toString() + "_" + file.originalname);
       },
@@ -93,7 +93,7 @@ const upload1 = multer({ storage: storage1 });
 const streamedUpload = async (data) => {
   // Create an instance of the S3 service
   const uploadParams = {
-    Bucket: "meddaily-files",
+    Bucket: "meddaily",
     Key: "INVOICE" + Date.now(),
     Body: data,
   };

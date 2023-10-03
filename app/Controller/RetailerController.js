@@ -11,112 +11,58 @@ const generateUsertoken = require("../Common/common.js");
 const fs = require("fs");
 const e = require("cors");
 const token = require("../Models/token");
-const sdk = require('api')('@phonepe-docs/v1#3dxznuf1gljiezluv');
-const phonePaySalt= "c817ffaf-8471-48b5-a7e2-a27e5b7efbd3"
-const phonePaySaltIndex= 1
-const base64json = require('base64json');
-// const sha256= require('sha256')
-const axios = require('axios');
-var sha256 = require('js-sha256').sha256;
-const nodemailer = require('./nodemailer')
-const bcrypt = require("bcrypt");
-
 
 require("dotenv").config();
 
 // login function
 module.exports.retailer_login = async (req, resp) => {
+  // create jwt token
+  console.log(req.body);
   const { phone, password } = req.body;
-
-  if (!phone || !password) {
-    return resp.status(400).json({ status: 400, success: false, message: 'Please enter your phone and password.' });
-  }
-
-  try {
-    const findRetailer = await Retailer.findOne({ phonenumber: phone });
-
-    if (!findRetailer) {
-      return resp.status(404).json({ status: 404, success: false, message: 'This user does not exist. Please sign up.' });
-    }else if (findRetailer.verify === 'false') {
-      return resp.status(401).json({ status: 401, success: false, message: "Your request has been rejected. Please contact customer support for more information." });
-    } else{
-
-    // const passwordMatch = await bcrypt.compare(password, findRetailer.password);
-    const passwordMatch = '2'
-
-    if (passwordMatch) {
-      const jwtToken = generateUsertoken(findRetailer);
-      const saveToken = new token({ token: jwtToken });
+  await Retailer.findOne({
+    phonenumber: phone,
+    password: password,
+  }).then(async (result) => {
+    if (result != null) {
+      const jwt = generateUsertoken(result);
+      let saveToken = new token({ token: jwt });
       await saveToken.save();
-
-      return resp.status(200).json({
-        status: 200,
-        success: true,
-        message: 'You have been logged in successfully!',
-        data: findRetailer,
-        Token: jwtToken,
+      resp.json({
+        status: true,
+        message: "login successful",
+        data: result,
+        token: jwt,
       });
     } else {
-      return resp.status(401).json({ status: 401, success: false, message: 'Wrong phone number or password.' });
+      resp.json({ status: false, message: "login unsuccessful" });
     }
-  }
-  } catch (error) {
-    console.log(error)
-    return resp.status(500).json({ status: 500, success: false, message: 'Internal server error.' });
-  }
-  // create jwt token
-  // console.log(req.body);
-  // const { phone, password } = req.body;
-  // await Retailer.findOne({
-  //   phonenumber: phone,
-  //   password: password,
-  // }).then(async (result) => {
-  //   console.log(result)
-  //   if (!result) {
-  //     const jwt = generateUsertoken(result);
-  //     let saveToken = new token({ token: jwt });
-  //     await saveToken.save();
-  //     resp.json({
-  //       status: true,
-  //       message: "login successful",
-  //       data: result,
-  //       token: jwt,
-  //     });
-  //   } else {
-  //     resp.json({ status: false, message: "login unsuccessful" });
-  //   }
-  // });
+  });
 };
-
 
 // get user details using token
 module.exports.retailer_register = async (req, resp) => {
-  try {
-    const retailer = await Retailer.findOne({ phonenumber: req.body.phonenumber });
-
-    if (retailer && retailer.verify === "false") {
-      // Retailer has been rejected by admin
-      return resp.status(401).json({ status: false, message: "Your request has been rejected by the admin. Please contact customer support for more information." });
-    } else if (retailer) {
-      // Retailer is already registered or under verification
-      return resp.status(400).json({ status: false, message: "Registration is already under verification and waiting for approval from Meddaily." });
-    } else {
-      // registration
-      const data = req.body;
-      const retailerData = new Retailer(data);
-      const retailer_data = await retailerData.save();
-      return resp.status(201).json({ status: true, message: "Retailer signup successful", data: retailer_data });
+  await Retailer.findOne({ phonenumber: req.body.phonenumber }).then((user) => {
+    if (user != null) {
+     return resp.send({ status: false, message: "Retailer already exist" });
     }
-  } catch (error) {
-    console.error(error);
-    return resp.status(500).json({ status: 500, success: false, message: "Internal server error." });
-  }
+  });
+
+  var data = req.body;
+
+  console.log('data',data)
+
+  console.log('req.files',req.files)
+  // data.licenseimage = req.files["image1"].location;
+  // data.gstimage = req.files["image2"].location;
+  const retailer = new Retailer(data);
+  const retailer_data = await retailer.save();
+  // // console.log(retailer_data);
+  resp.send({ status: true, message: "Retailer signup successfull" });
 };
 
-
-
 // update user details
-module.exports.retailer_update = async (req, resp) => { 
+module.exports.retailer_update = async (req, resp) => {
+  console.log(req.body);
   var data = req.body;
 
   await Retailer.findOneAndUpdate(
@@ -218,7 +164,6 @@ module.exports.retailer_home = async (req, res) => {
       categorydata,
       productdata,
       offerdata,
-      distributor
     });
   } catch (err) {
     res.send({ status: false, message: err });
@@ -307,48 +252,39 @@ pro.map((item) => {
 };
 
 module.exports.product_details = async (req, res) => {
-  try{
-    console.log(req.user._id)
-    var retailer = await Retailer.findOne({ _id: req.user._id });
-    var retailercity = retailer.city;
-    var distributor = await Distributor.find({ city: retailercity });
-    var distributor_id = [];
-    var distributor_data = [];
-    distributor.map((id) => {
-      distributor_id.push(id._id.toString());
+  var retailer = await Retailer.findOne({ _id: req.user._id });
+  var retailercity = retailer.city;
+  var distributor = await Distributor.find({ city: retailercity });
+  var distributor_id = [];
+  var distributor_data = [];
+  distributor.map((id) => {
+    distributor_id.push(id._id.toString());
+  });
+  console.log(distributor_id);
+  var pro = await Product.findOne({ _id: req.body.id });
+  if (pro.distributors.length > 0) {
+    pro.distributors.map((dis) => {
+      if (distributor_id.includes(dis.distributorId)) {
+        distributor_data.push(dis);
+      }
     });
-    console.log(distributor_id);
-    console.log("Product", req.body);
-
-    var pro = await Product.findOne({ _id: req.body.id });
-    console.log('pro',pro)
-    if (pro && pro.distributors.length > 0) {
-      pro.distributors.map((dis) => {
-        if (distributor_id.includes(dis.distributorId)) {
-          distributor_data.push(dis);
-        }
-      });
-    }
-  
-    var product = {
-      name: pro?.title,
-      subname: pro?.sub_title,
-      description: pro?.description,
-      price: distributor_data[0]?.price,
-      stock: distributor_data[0]?.stock,
-      applicable_tax: pro?.applicable_tax,
-    };
-  
-    res.send({
-      product: pro,
-      distributor: pro.distributors,
-      status: true,
-      message: "Product data show successfull",
-    });
-  }catch (err){
-    console.log(err)
   }
 
+  var product = {
+    name: pro.title,
+    subname: pro.sub_title,
+    description: pro.description,
+    price: distributor_data[0].price,
+    stock: distributor_data[0].stock,
+    applicable_tax: pro.applicable_tax,
+  };
+
+  res.send({
+    product: product,
+    distributor: distributor_data,
+    status: true,
+    message: "Product data show successfull",
+  });
 };
 
 module.exports.add_to_cart = async (req, res) => {
@@ -374,8 +310,6 @@ module.exports.add_to_cart = async (req, res) => {
           distributor_id: req.body.distributor_id,
           quantity: req.body.quantity,
         };
-
-        console.log('obj', obj)
         await Cart.create(obj)
           .then((item) => {
             res.send({
@@ -384,7 +318,7 @@ module.exports.add_to_cart = async (req, res) => {
             });
           })
           .catch((err) => {
-            res.send(res, false, err);
+            response.sendResponse(res, false, err);
           });
       }
     } else {
@@ -394,9 +328,6 @@ module.exports.add_to_cart = async (req, res) => {
         distributor_id: req.body.distributor_id,
         quantity: req.body.quantity,
       };
-
-      console.log('obj', obj)
-
       await Cart.create(obj)
         .then((item) => {
           res.send({
@@ -405,27 +336,23 @@ module.exports.add_to_cart = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.send(res, false, err);
+          response.sendResponse(res, false, err);
         });
     }
   });
 };
 
 module.exports.get_cart = async (req, res) => {
-  await Cart.find({ user_id: req.user._id })
+  var cart = await Cart.find({ user_id: req.user._id })
     .then(async (item) => {
-      console.log('item', item)
       var arr = [];
       for (var i = 0; i < item.length; i++) {
         var product = await Product.findOne({ _id: item[i].product_id });
         var dis = product.distributors.filter(
           (pro) => pro.distributorId == item[0].distributor_id
         );
-      console.log(dis,"dis");
-
         var obj = {
           _id: item[i]._id,
-          product:product,
           product_id: item[i].product_id,
           product_name: product.title,
           distributor_name: dis[0].distributorName,
@@ -516,36 +443,19 @@ module.exports.retailer_request = async (req, res) => {
 };
 
 module.exports.retailer_approve = async (req, res) => {
-  const retailerId = req.body.retailerId; 
-  try {
-    const retailer = await Retailer.findByIdAndUpdate(retailerId, { verify: true }, { new: true });
-    if (!retailer) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Retailer not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Retailer Approved successfully.' ,data:retailer});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to approved Retailer.' });
-  }
+  await Retailer.findOneAndUpdate(
+    { _id: req.body.id },
+    { verify: true },
+    { new: true }
+  )
+    .then((result) => {
+      res.send({ status: true, message: "Retailer Approved", data: result });
+    })
+    .catch((err) => {
+      res.send({ status: false, message: err });
+      console.log(err);
+    });
 };
-
-exports.retailer_reject = async (req, res) => {
-  const retailerId = req.body.retailerId; 
-  try {
-    const retailer = await Retailer.findByIdAndUpdate(retailerId, { verify: false }, { new: true });
-    if (!retailer) {
-      // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Retailer not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Retailer Rejected successfully.' ,data:retailer});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to rejected Retailer.' });
-  }
-};
-
-
 
 module.exports.retailer_detail = async (req, res) => {
   await Retailer.findOne({ _id: req.body.id })
@@ -563,7 +473,6 @@ module.exports.checkout = async (req, res) => {
     let item = [];
     let distributorId;
     console.log("reqdata==========>", req.body);
-    
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
       var len = cartdata.length;
 
@@ -597,31 +506,23 @@ module.exports.checkout = async (req, res) => {
       }
       await product.save();
     });
-    var orderidData ="MEDI" + (Math.floor(Math.random() * (99999 - 11111)) + 11111);
-    console.log(orderidData);
+    var orderid =
+      "MEDI" + (Math.floor(Math.random() * (99999 - 11111)) + 11111);
+    console.log(orderid);
     var obj = {
       retailer_id: req.user._id,
-      order_id: orderidData,
+      order_id: orderid,
       distributor_id: distributorId,
-      price: req.body.data.price,
+      price: req.body.price,
       products: item,
-      payment_type: req.body.data.payment_type,
-      bonus_quantity: req.body.data.bonus_quantity,
-      originalPrice: req.body.data.originalPrice,
-      tax: req.body.data.tax, 
-       deliveryCost: req.body.data.deliveryCost,
-
+      payment_type: req.body.payment_type,
+      bonus_quantity: req.body.bonus_quantity,
     };
-
-    console.log('obj', obj, "price", req.body.data.price)
     await Order.create(obj)
       .then((item) => {
-        console.log('added ed order', item)
         res.send({ status: true, message: "order success", data: item });
       })
       .catch((err) => {
-        console.log('added ed err', err)
-
         res.send({ status: true, message: err.message, data: null });
       });
   } catch (err) {
@@ -630,28 +531,21 @@ module.exports.checkout = async (req, res) => {
 };
 
 module.exports.my_order = async (req, res) => {
-  await Order.find({ retailer_id: req.user._id }).sort({ createdAt: -1 })
-    .then((order) => {
-      if(!order || order.length===0){
-         return res.status(404).json({ status: false, message: "No orders found for this retailer." });
-      }
-      
-      res.status(200).json({ status: true, message: "My Order", data: order });
+  await Order.find({ retailer_id: req.user._id })
+    .sort({ createdAt: -1 })
+    .then((result) => {
+      res.send({ status: true, message: "My Order", data: result });
     })
     .catch((err) => {
-      return res.send({ status: false, message: err });
+      res.send({ status: false, message: err });
       console.log(err);
-    }); 
+    });
 };
- 
+
 module.exports.return_order = async (req, res) => {
   console.log("called");
   var id = req.body.order_id;
   var status = "returned";
-  var files =''
-  if(req.files){
-    files=req.file.location
-  }
   await Order.updateOne(
     { order_id: id, order_status: 3 },
     {
@@ -660,7 +554,7 @@ module.exports.return_order = async (req, res) => {
       return_status: 1,
       return_reason: req.body.reason,
       return_message: req.body.message,
-      return_image: files,
+      return_image: req.file.location,
     }
   )
     .then((result) => {
@@ -703,25 +597,23 @@ module.exports.order_details = async (req, res) => {
         let retailerName = await Retailer.findOne({
           _id: result.retailer_id,
         });
-        result.distributor_name =
+        result._doc.distributor_name =
           distributerName.firstname + " " + distributerName.lastname;
-        result.distributor_address =
+        result._doc.distributor_address =
           distributerName.city +
           " " +
           distributerName.area +
           " " +
           distributerName.state;
-        result.retailer_name = retailerName.ownername;
-        result.retailer_address = retailerName.address;
-        result.item_total = totalAmount;
-        result.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
-        result.applicable_tax = getProductTax.applicable_tax;
+        result._doc.retailer_name = retailerName.ownername;
+        result._doc.retailer_address = retailerName.address;
+        result._doc.item_total = totalAmount;
+        result._doc.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
+        result._doc.applicable_tax = getProductTax.applicable_tax;
 
-        result.delivery_fee = 100;
-        result.order_total =
-          result.item_total + result.Tax + result.delivery_fee;
-
-          console.log(result)
+        result._doc.delivery_fee = 100;
+        result._doc.order_total =
+          result._doc.item_total + result._doc.Tax + result._doc.delivery_fee;
         res.send({
           status: true,
           message: "Order Details",
@@ -777,8 +669,6 @@ module.exports.get_return = async (req, res) => {
         },
       };
     }
-
-    console.log(obj)
     await Order.find(obj)
       .then(async (item) => {
         const mappedResults = await Promise.all(
@@ -872,200 +762,6 @@ module.exports.cancel_order_admin = async (req, res) => {
     res.send({ Status: false, message: err.message });
   }
 };
-
-
-module.exports.paymentInitiated = async (req, res) => {
-  try {
-    var JSONDataPayload = {
-      
-  "merchantId": "MERCHANTUAT",
-  "merchantTransactionId": "MT"+ Math.floor(new Date()),
-  "merchantUserId": "MUID123",
-  "amount": req.body.paymentPayload.price*100,
-  "redirectUrl": "https://meddaily.in/#/home",
-  "redirectMode": "REDIRECT",
-  "callbackUrl": "http://localhost:8000/calback",
-  "mobileNumber": "9999999999",
-  "paymentInstrument": {
-    "type": "PAY_PAGE"
-  }
-}
-    
-    let encoded = base64json.stringify(JSONDataPayload, null, 2);
-    var data = `${encoded}/pg/v1/pay`+'099eb0cd-02cf-4e2a-8aca-3e6c6aff0399'
-
-    var sh = sha256(data);
-
-    var fnal = `${sh}###1`
-
-    console.log('body',  req.body)
-    console.log('data',  data)
-    console.log('encode',  encoded)
-    console.log('fnal',  fnal)
-    var newS = {
-      "body":req.body,
-      "data":data,
-      "encode":encoded,
-      "fnal":fnal
-    }
-
-
-    const options = {
-      method: 'POST',
-      url: 'https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay',
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-VERIFY': fnal
-      },
-      data: {
-        request: encoded
-      }
-    };
-    axios
-    .request(options)
-    .then(function (response) {
-      console.log(response.data);
-
-      res.send({...response.data, "newS": newS})
-    })
-    .catch(function (error) {
-      res.send({"newS": newS})
-      console.error(error);
-    });
-
-
-  } catch (err) {
-    console.log(err);
-    res.send({ Status: false, message: err.message });
-  }
-};
-
-module.exports.paymentCallback = async (req, res) => {
-  console.log('callback')
-  return
-  try {
-    var JSONDataPayload = {
-      
-  "merchantId": "MERCHANTUAT",
-  "merchantTransactionId": "MT"+ Math.floor(new Date()),
-  "merchantUserId": "MUID123",
-  "amount": req.body.paymentPayload.price*100,
-  "redirectUrl": "https://webhook.site/redirect-url",
-  "redirectMode": "REDIRECT",
-  "callbackUrl": "http://localhost:8000/calback",
-  "mobileNumber": "9999999999",
-  "paymentInstrument": {
-    "type": "PAY_PAGE"
-  }
-}
-    
-    let encoded = base64json.stringify(JSONDataPayload, null, 2);
-    var data = `${encoded}/pg/v1/pay`+'099eb0cd-02cf-4e2a-8aca-3e6c6aff0399'
-
-    var sh = sha256(data);
-
-    var fnal = `${sh}###1`
-
-    console.log('body',  req.body)
-    console.log('data',  data)
-    console.log('encode',  encoded)
-    console.log('fnal',  fnal)
-    var newS = {
-      "body":req.body,
-      "data":data,
-      "encode":encoded,
-      "fnal":fnal
-    }
-
-
-    const options = {
-      method: 'POST',
-      url: 'https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay',
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-VERIFY': fnal
-      },
-      data: {
-        request: encoded
-      }
-    };
-    axios
-    .request(options)
-    .then(function (response) {
-      console.log(response.data);
-
-      res.send({...response.data, "newS": newS})
-    })
-    .catch(function (error) {
-      res.send({"newS": newS})
-      console.error(error);
-    });
-
-
-  } catch (err) {
-    console.log(err);
-    res.send({ Status: false, message: err.message });
-  }
-};
-
-module.exports.forGotPassword = async  (req,res,next)=>{
-
-
-  var user = await Retailer.findOne({email:req.body.email})
-
-  
-
-   if(user){
-    var val = Math.floor(1000 + Math.random() * 9000);
-
-    nodemailer.sendEmail({
-      from:"admin@meddaily.in",
-      to:req.body.email,
-      subject:"OTP Verification",
-      text:"Hi your one time password is "+ val
-     })
-
-    res.send({status: true, otp: val})
-   }else{
-    res.send({
-      status: false, message: "user is not valid, please enter valid email"
-    })
-   }
-   
-
-   
-
-
-
-
-
-
-
-
-}
-
-module.exports.updatePassword = async  (req,res,next)=>{
-
-
-  var user = await Retailer.findOne({email:req.body.email})
-
-  
-
-   if(user){
-  
-    var UpdateUser = await Retailer.findOneAndUpdate({email:req.body.email}, {$set:{password:req.body.password}})
-
-    res.send({status: true, message:"Password updated successfully"})
-   }else{
-    res.send({
-      status: false, message: "user is not valid, please enter valid email"
-    })
-   }
-
-
-}
 
 
 

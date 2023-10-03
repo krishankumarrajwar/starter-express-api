@@ -71,10 +71,6 @@ module.exports = (route) => {
   route.get("/get_cart", auth, RetailerController.get_cart);
   route.post("/update_cart", auth, RetailerController.update_cart);
   route.delete("/delete_cart", auth, RetailerController.delete_cart);
-  route.post("/payment_initiate",  RetailerController.paymentInitiated);
-  route.get("/call-back",  RetailerController.paymentCallback);
-
-
 
   // checkout
   route.get("/my_order", auth, RetailerController.my_order);
@@ -134,8 +130,4 @@ module.exports = (route) => {
     auth,
     DistributorController.distributor_get_product_retailer
   );
-
-  route.post('/forgot_password' , RetailerController.forGotPassword)
-  route.post('/update_password' , RetailerController.updatePassword)
-
 };

@@ -280,8 +280,6 @@ module.exports.searchProduct = async (req, res) => {
   try {
     let getproducts = await getCategoryWiseProducts(req.query.category);
 
-    console.log(getproducts)
-
     res.send({
       status: true,
       message: "data fetched successfully",
@@ -289,7 +287,7 @@ module.exports.searchProduct = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.send({ status: false, message: "product search failes" });         
+    res.send({ status: false, message: "product search failes" });
   }
 };
 
