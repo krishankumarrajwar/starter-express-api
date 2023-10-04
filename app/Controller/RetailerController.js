@@ -302,7 +302,7 @@ module.exports.add_to_cart = async (req, res) => {
       ) {
         return res.send({
           status: true,
-          message: "Item already in cart",f
+          message: "Item already in cart",
         });
       } else if (cartdata.distributor_id != req.body.distributor_id) {
         return res.send({
@@ -526,6 +526,8 @@ module.exports.checkout = async (req, res) => {
     console.log("reqdata==========>", req.body);
     //test git commit
 
+    
+
   
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
       var len = cartdata?.length;
@@ -600,35 +602,41 @@ module.exports.return_order = async (req, res) => {
   console.log("called");
   var id = req.body.order_id;
   var status = "returned";
-  await Order.updateOne(
-    { order_id: id, order_status: 3 },
-    {
-      order_id: "RETURN" + id,
-      return_quantity: req.body.quantity,
-      return_status: 1,
-      return_reason: req.body.reason,
-      return_message: req.body.message,
-      return_image: req.file.location,
-    }
-  )
-    .then((result) => {
-      if (result.modifiedCount > 0) {
-        return res.send({
-          status: true,
-          message: "order return success",
-          data: result,
-        });
+
+  try{
+    await Order.updateOne(
+      { order_id: id, order_status: 3 },
+      {
+        order_id: "RETURN" + id,
+        return_quantity: req.body.quantity,
+        return_status: 1,
+        return_reason: req.body.reason,
+        return_message: req.body.message,
+        return_image: req.file?req.file.location:"",
       }
-      res.send({
-        status: false,
-        message: "order already complete or not found",
-        data: null,
+    )
+      .then((result) => {
+        if (result.modifiedCount > 0) {
+          return res.send({
+            status: true,
+            message: "order return success",
+            data: result,
+          });
+        }
+        res.send({
+          status: false,
+          message: "order already complete or not found",
+          data: null,
+        });
+      })
+      .catch((err) => {
+        res.send({ status: false, message: err });
+        console.log(err);
       });
-    })
-    .catch((err) => {
-      res.send({ status: false, message: err });
-      console.log(err);
-    });
+  }catch(err){
+    console.log(err)
+  }
+ 
 };
 
 module.exports.order_details = async (req, res) => {
