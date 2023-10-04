@@ -55,12 +55,14 @@ module.exports.retailer_register = async (req, resp) => {
   console.log('data',data)
 
   console.log('req.files',req.files)
-  // data.licenseimage = req.files["image1"].location;
-  // data.gstimage = req.files["image2"].location;
+  data.licenseimage = req.files["image1"][0].location;
+  data.gstimage = req.files["image2"][0].location;
   const retailer = new Retailer(data);
   const retailer_data = await retailer.save();
-  // // console.log(retailer_data);
-  resp.send({ status: true, message: "Retailer signup successfull" });
+  console.log(retailer_data);
+  if(retailer_data){
+    resp.send({ status: true, message: "Retailer signup successfull" });
+  }
 };
 
 // update user details
@@ -406,6 +408,7 @@ module.exports.get_cart = async (req, res) => {
           distributor_id: dis[0]?.distributorId,
           price: dis[0]?.price,
           quantity: item[i]?.quantity,
+          product:product
         };
         arr.push(obj);
         console.log("object xoxoxo",obj); 
@@ -521,6 +524,8 @@ module.exports.checkout = async (req, res) => {
     let item = [];
     let distributorId;
     console.log("reqdata==========>", req.body);
+
+  
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
       var len = cartdata?.length;
 
