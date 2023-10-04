@@ -524,6 +524,7 @@ module.exports.checkout = async (req, res) => {
     let item = [];
     let distributorId;
     console.log("reqdata==========>", req.body);
+    //test git commit
 
   
     await Cart.find({ user_id: req.user._id }).then(async (cartdata) => {
