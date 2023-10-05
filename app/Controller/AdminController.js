@@ -123,7 +123,13 @@ module.exports.order_detail = async (req, res) => {
       let retailerName = await Retailer.findOne({
         _id: item.retailer_id,
       });
-      response.sendResponse(res, "success", item, retailerName, distributerName);
+      // response.sendResponse(res, "success", item, retailerName, distributerName);
+      res.send({
+        status:'success',
+        ...item,
+        retailerName:retailerName,
+        distributerName:distributerName
+      })
     })
     .catch((err) => {
       response.sendResponse(res, "fail", err);
