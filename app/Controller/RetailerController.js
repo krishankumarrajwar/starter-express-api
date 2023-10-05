@@ -675,7 +675,7 @@ module.exports.order_details = async (req, res) => {
 
         result.delivery_fee = 100;
         result.order_total =
-          result.item_total + result._doc.Tax + result._doc.delivery_fee;
+          result.item_total + result.Tax + result.delivery_fee;
         res.send({
           status: true,
           message: "Order Details",
