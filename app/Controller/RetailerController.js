@@ -659,23 +659,23 @@ module.exports.order_details = async (req, res) => {
         let retailerName = await Retailer.findOne({
           _id: result.retailer_id,
         });
-        result._doc.distributor_name =
+        result.distributor_name =
           distributerName.firstname + " " + distributerName.lastname;
-        result._doc.distributor_address =
+        result.distributor_address =
           distributerName.city +
           " " +
           distributerName.area +
           " " +
           distributerName.state;
-        result._doc.retailer_name = retailerName.ownername;
-        result._doc.retailer_address = retailerName.address;
-        result._doc.item_total = totalAmount;
-        result._doc.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
-        result._doc.applicable_tax = getProductTax.applicable_tax;
+        result.retailer_name = retailerName.ownername;
+        result.retailer_address = retailerName.address;
+        result.item_total = totalAmount;
+        result.Tax = (totalAmount * getProductTax.applicable_tax) / 100;
+        result.applicable_tax = getProductTax.applicable_tax;
 
-        result._doc.delivery_fee = 100;
-        result._doc.order_total =
-          result._doc.item_total + result._doc.Tax + result._doc.delivery_fee;
+        result.delivery_fee = 100;
+        result.order_total =
+          result.item_total + result._doc.Tax + result._doc.delivery_fee;
         res.send({
           status: true,
           message: "Order Details",
