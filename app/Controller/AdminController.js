@@ -126,7 +126,7 @@ module.exports.order_detail = async (req, res) => {
       // response.sendResponse(res, "success", item, retailerName, distributerName);
       res.send({
         status:'success',
-        ...item,
+        message:item,
         retailerName:retailerName,
         distributerName:distributerName
       })
