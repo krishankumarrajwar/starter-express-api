@@ -676,10 +676,14 @@ module.exports.order_details = async (req, res) => {
         result.delivery_fee = 100;
         result.order_total =
           result.item_total + result.Tax + result.delivery_fee;
+
+          console.log('result', result)
         res.send({
           status: true,
           message: "Order Details",
           data: result,
+          retailer:retailerName,
+          distributor:distributerName
         });
       })
       .catch((err) => {
