@@ -116,8 +116,14 @@ module.exports.order_status_change = async (req, res) => {
 module.exports.order_detail = async (req, res) => {
   const { order_id } = req.body;
   await Order.findOne({ _id: order_id })
-    .then((item) => {
-      response.sendResponse(res, "success", item);
+    .then(async (item) => {
+      let distributerName = await Distributor.findOne({
+        _id: item.distributor_id,
+      });
+      let retailerName = await Retailer.findOne({
+        _id: item.retailer_id,
+      });
+      response.sendResponse(res, "success", {...item, retailor:retailerName, distributor:distributerName});
     })
     .catch((err) => {
       response.sendResponse(res, "fail", err);
