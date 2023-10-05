@@ -129,21 +129,7 @@ module.exports.return_order_request = async (req, res) => {
 
   try {
     let obj = {};
-    if (!req.query.from && !req.query.to) {
-      obj = {
-        return_status: { $gt: 0 },
-        $or: [{ distributor_id: req.user._id }, { retailer_id: req.user._id }],
-      };
-    } else {
-      obj = {
-        return_status: { $gt: 0 },
-        $or: [{ distributor_id: req.user._id }, { retailer_id: req.user._id }],
-        // createdAt: {
-        //   $gte: req.query.from,
-        //   $lte: req.query.to,
-        // },
-      };
-    }
+  
     await Order.find({})
       .then(async (item) => {
         const mappedResults = await Promise.all(
