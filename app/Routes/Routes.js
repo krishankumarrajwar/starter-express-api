@@ -83,6 +83,8 @@ module.exports = (route) => {
     RetailerController.return_order
   );
   route.get("/get_all_return", auth, RetailerController.get_return);
+  route.post("/payment_initiate",  RetailerController.paymentInitiated);
+  route.get("/call-back",  RetailerController.paymentCallback);
 
   // distributor api
   route.get(

@@ -979,7 +979,7 @@ module.exports.paymentInitiated = async (req, res) => {
 //payments
 module.exports.paymentCallback = async (req, res) => {
   console.log('callback')
-  return
+  // return
   try {
     var JSONDataPayload = {
       
