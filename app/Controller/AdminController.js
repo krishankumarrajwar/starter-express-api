@@ -101,7 +101,7 @@ module.exports.all_order = async (req, res) => {
 module.exports.order_status_change = async (req, res) => {
   const { order_id, status } = req.body;
   await Order.findOneAndUpdate(
-    { _id: order_id },
+    { order_id: order_id },
     { order_status: status },
     { new: true }
   )
