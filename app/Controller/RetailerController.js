@@ -555,6 +555,8 @@ module.exports.checkout = async (req, res) => {
     await Cart.find({ user_id: req?.user._id }).then(async (cartdata) => {
       var len = cartdata?.length;
 
+      console.log("cart details", cartdata)
+
       distributorId = cartdata[0].distributor_id;
       for (var i = 0; i < len; i++) {
         proDuctId = cartdata[i]?.product_id
@@ -575,12 +577,14 @@ module.exports.checkout = async (req, res) => {
               stock: disDetails.stock*1 -  cartdata[0]?.quantity*1
             }
 
-            var newDis = product.distributors.filter(f=> f._id != distributorId)
+            var newDis = product.distributors.filter(f=> f.distributorId != distributorId)
             newDis.push(disDetails)
 
             console.log("disDetails", disDetails)
             
-             Product.findOneAndUpdate({ _id: cartdata[i]?.product_id }, {$set:{distributors: newDis}})
+             Product.findOneAndUpdate({ _id: cartdata[i]?.product_id }, {$set:{distributors: newDis}}).then((d)=>{
+              console.log('Product updated')
+             })
             
           }
         });
