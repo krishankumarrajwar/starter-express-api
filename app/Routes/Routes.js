@@ -75,7 +75,7 @@ module.exports = (route) => {
   // checkout
   route.get("/my_order", auth, RetailerController.my_order);
   route.get("/order_details", auth, RetailerController.order_details);
-  route.post("/checkout",  RetailerController.checkout);
+  route.post("/checkout",auth,  RetailerController.checkout);
   route.post(
     "/return_order",
     auth,
@@ -135,4 +135,6 @@ module.exports = (route) => {
 
   route.post('/forgot_password' , RetailerController.forGotPassword)
   route.post('/update_password' , RetailerController.updatePassword)
+  route.get('/get-product/:id' , RetailerController.getProduct)
+
 };
