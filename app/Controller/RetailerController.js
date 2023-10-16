@@ -62,7 +62,7 @@ module.exports.retailer_register = async (req, resp) => {
 
   console.log("req.files", req.files);
   // data.licenseimage = req.files["image1"][0].location;
-  data.gstimage = req.files["image2"][0].location;
+  // data.gstimage = req.files["image2"][0].location;
   const retailer = new Retailer(data);
   const retailer_data = await retailer.save();
   console.log(retailer_data);
@@ -540,6 +540,10 @@ module.exports.retailer_detail = async (req, res) => {
 module.exports.checkout = async (req, res) => {
   let distributorId;
   let qtyId;
+  let disDetails;
+  let proDuctId;
+
+
 
   try {
     console.log("yyyyyyy", req.user);
@@ -553,6 +557,7 @@ module.exports.checkout = async (req, res) => {
 
       distributorId = cartdata[0].distributor_id;
       for (var i = 0; i < len; i++) {
+        proDuctId = cartdata[i]?.product_id
         var product = await Product.findOne({ _id: cartdata[i]?.product_id });
         console.log("product", cartdata[0]?.quantity);
         qtyId = cartdata[0]?.quantity
@@ -562,6 +567,21 @@ module.exports.checkout = async (req, res) => {
             if (!parseInt(e?.stock) > parseInt(cartdata[0]?.quantity)) {
               throw new Error("Not enough stock");
             }
+
+            disDetails = e
+
+            disDetails ={
+              ...disDetails,
+              stock: disDetails.stock*1 -  cartdata[0]?.quantity*1
+            }
+
+            var newDis = product.distributors.filter(f=> f._id != distributorId)
+            newDis.push(disDetails)
+
+            console.log("disDetails", disDetails)
+            
+             Product.findOneAndUpdate({ _id: cartdata[i]?.product_id }, {$set:{distributors: newDis}})
+            
           }
         });
         var price = product?.distributors?.filter(
@@ -580,7 +600,7 @@ module.exports.checkout = async (req, res) => {
         };
         item.push(obje);
       }
-      await product.save();
+      await  Product.findOneAndUpdate({ _id: cartdata[i]?.product_id },{$set:{distributors:item}});
     });
     var orderid =
       "MEDI" + (Math.floor(Math.random() * (99999 - 11111)) + 11111);
@@ -596,6 +616,8 @@ module.exports.checkout = async (req, res) => {
     };
     await Order.create(obj)
       .then((item) => {
+
+     
         res.send({ status: true, message: "order success", data: item });
       })
       .catch((err) => {
