@@ -949,7 +949,7 @@ module.exports.paymentInitiated = async (req, res) => {
       merchantId: "PGTESTPAYUAT",
       merchantTransactionId: "MT" + Math.floor(new Date()),
       merchantUserId: "MUID123",
-      amount: 100* 100,
+      amount: req.body.paymentPayload.price  * 100,
       redirectUrl: "https://meddaily.in/#/home",
       redirectMode: "REDIRECT",
       callbackUrl: "https://meddaily.in/#/home",
