@@ -946,18 +946,20 @@ module.exports.updatePassword = async (req, res, next) => {
 module.exports.paymentInitiated = async (req, res) => {
   try {
     var JSONDataPayload = {
-      merchantId: "MERCHANTUAT",
+      merchantId: "PGTESTPAYUAT",
       merchantTransactionId: "MT" + Math.floor(new Date()),
       merchantUserId: "MUID123",
-      amount: req.body.paymentPayload.price * 100,
+      amount: 100* 100,
       redirectUrl: "https://meddaily.in/#/home",
       redirectMode: "REDIRECT",
-      callbackUrl: "http://localhost:8000/calback",
+      callbackUrl: "https://meddaily.in/#/home",
       mobileNumber: "9999999999",
       paymentInstrument: {
         type: "PAY_PAGE",
       },
     };
+
+    // req.body.paymentPayload.price 
 
     let encoded = base64json.stringify(JSONDataPayload, null, 2);
     var data = `${encoded}/pg/v1/pay` + "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
@@ -966,7 +968,7 @@ module.exports.paymentInitiated = async (req, res) => {
 
     var fnal = `${sh}###1`;
 
-    console.log("body", req.body);
+    // console.log("body", req.body);
     console.log("data", data);
     console.log("encode", encoded);
     console.log("fnal", fnal);
@@ -1008,68 +1010,10 @@ module.exports.paymentInitiated = async (req, res) => {
 
 //payments
 module.exports.paymentCallback = async (req, res) => {
+  console.log('req.body for payment', req.body)
   console.log("callback");
   // return
-  try {
-    var JSONDataPayload = {
-      merchantId: "MERCHANTUAT",
-      merchantTransactionId: "MT" + Math.floor(new Date()),
-      merchantUserId: "MUID123",
-      amount: req.body.paymentPayload.price * 100,
-      redirectUrl: "https://webhook.site/redirect-url",
-      redirectMode: "REDIRECT",
-      callbackUrl: "http://localhost:8000/calback",
-      mobileNumber: "9999999999",
-      paymentInstrument: {
-        type: "PAY_PAGE",
-      },
-    };
-
-    let encoded = base64json.stringify(JSONDataPayload, null, 2);
-    var data = `${encoded}/pg/v1/pay` + "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
-
-    var sh = sha256(data);
-
-    var fnal = `${sh}###1`;
-
-    console.log("body", req.body);
-    console.log("data", data);
-    console.log("encode", encoded);
-    console.log("fnal", fnal);
-    var newS = {
-      body: req.body,
-      data: data,
-      encode: encoded,
-      fnal: fnal,
-    };
-
-    const options = {
-      method: "POST",
-      url: "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay",
-      headers: {
-        accept: "application/json",
-        "Content-Type": "application/json",
-        "X-VERIFY": fnal,
-      },
-      data: {
-        request: encoded,
-      },
-    };
-    axios
-      .request(options)
-      .then(function (response) {
-        console.log(response.data);
-
-        res.send({ ...response.data, newS: newS });
-      })
-      .catch(function (error) {
-        res.send({ newS: newS });
-        console.error(error);
-      });
-  } catch (err) {
-    console.log(err);
-    res.send({ Status: false, message: err.message });
-  }
+ 
 };
 
 module.exports.getProduct= async (req,res)=>{

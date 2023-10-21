@@ -84,7 +84,7 @@ module.exports = (route) => {
   );
   route.get("/get_all_return", auth, RetailerController.get_return);
   route.post("/payment_initiate",  RetailerController.paymentInitiated);
-  route.get("/call-back",  RetailerController.paymentCallback);
+  route.post("/call-back",  RetailerController.paymentCallback);
 
   // distributor api
   route.get(
