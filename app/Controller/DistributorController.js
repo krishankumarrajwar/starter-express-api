@@ -24,12 +24,17 @@ module.exports.distributor_login = async (req, resp) => {
         const jwt = generateUsertoken(result);
         let saveToken = new token({ token: jwt });
         await saveToken.save();
-        resp.json({
-          status: true,
-          message: "login successful",
-          data: result,
-          token: jwt,
-        });
+        if(result.verify=='true'){
+          resp.json({
+            status: true,
+            message: "login successful",
+            data: result,
+            token: jwt,
+          });
+        }
+        else{
+          resp.json({ status: false, message: "login unsuccessful, waiting for admin approval" });
+        }
       } else {
         resp.json({ status: false, message: "login unsuccessful" });
       }
@@ -173,7 +178,7 @@ module.exports.distributor_request = async (req, res) => {
 module.exports.distributor_get_product = async (req, res) => {
   var pro = await Product.find(
     {},
-    { _id: 1, title: 1, image: 1, description: 1, sub_title: 1 , distributors:1, }
+    { _id: 1, title: 1, image: 1, description: 1, sub_title: 1 , distributors:1,category_id:1 }
   );
 
   console.log("pooppppp",pro);
@@ -185,7 +190,7 @@ module.exports.distributor_get_product = async (req, res) => {
       sub_title: product.sub_title,
       description: product.description,
       distributors: product.distributors,
-      
+      categoryId:product.category_id
 
     };
   });
