@@ -24,16 +24,18 @@ module.exports.distributor_login = async (req, resp) => {
         const jwt = generateUsertoken(result);
         let saveToken = new token({ token: jwt });
         await saveToken.save();
-        if(result.verify=='true'){
+        if (result.verify == "true") {
           resp.json({
             status: true,
             message: "login successful",
             data: result,
             token: jwt,
           });
-        }
-        else{
-          resp.json({ status: false, message: "login unsuccessful, waiting for admin approval" });
+        } else {
+          resp.json({
+            status: false,
+            message: "login unsuccessful, waiting for admin approval",
+          });
         }
       } else {
         resp.json({ status: false, message: "login unsuccessful" });
@@ -175,33 +177,103 @@ module.exports.distributor_request = async (req, res) => {
     });
 };
 
+// module.exports.distributor_get_product = async (req, res) => {
+//   var distributerData = await Distributor.findOne({ _id: req.user });
+//   console.log("dist data", distributerData);
+//   var categoryData = await Category.findOne({
+//     name: distributerData.distributortype,
+//   });
+//   console.log("cat data", categoryData);
+//   var pro = await Product.find(
+//     {},
+//     {
+//       _id: 1,
+//       title: 1,
+//       image: 1,
+//       description: 1,
+//       sub_title: 1,
+//       distributors: 1,
+//       category_id: 1,
+//     }
+//   );
+
+//   console.log("pooppppp", pro);
+//   pro = pro.map((product) => {
+//     console.log("cat id",categoryData._id)
+//     console.log("prod id",product.category_id)
+//     if (categoryData?._id == product?.category_id) {
+//       return {
+//         _id: product?._id,
+//         name: product?.title,
+//         image: product?.image,
+//         sub_title: product?.sub_title,
+//         description: product?.description,
+//         distributors: product?.distributors,
+//         categoryId: product?.category_id,
+//       };
+//     }
+//     else{
+//       return{
+//         _id: 'no data',
+//         name: 'no data',
+//         image: 'no data',
+//         sub_title: 'no data',
+//         description: 'no data',
+//         distributors: 'no data',
+//         categoryId: 'no data',
+//       }
+//     }
+//   });
+
+//   res.send({
+//     product: pro,
+//     status: true,
+//     message: "distributor data show successfull",
+//   });
+// };
+
+
 module.exports.distributor_get_product = async (req, res) => {
+  var distributorData = await Distributor.findOne({ _id: req.user });
+  console.log("dist data", distributorData);
+  var categoryData = await Category.findOne({
+    name: distributorData.distributortype,
+  });
+  console.log("cat data", categoryData);
   var pro = await Product.find(
-    {},
-    { _id: 1, title: 1, image: 1, description: 1, sub_title: 1 , distributors:1,category_id:1 }
+    {category_id:categoryData._id},
+    
   );
 
-  console.log("pooppppp",pro);
-  pro = pro.map((product) => {
-    return {
-      _id: product._id,
-      name: product.title,
-      image: product.image,
-      sub_title: product.sub_title,
-      description: product.description,
-      distributors: product.distributors,
-      categoryId:product.category_id
-
-    };
-  });
+  console.log("pooppppp", pro);
+  var pro_list=[]
+   if (pro.length>0){  pro.forEach((product) => {
+    console.log("cat id", categoryData._id);
+    console.log("prod id", product.category_id);
+    
+      console.log("is entering if block ?");
+      pro_list.push( {
+        _id: product?._id,
+        name: product?.title,
+        image: product?.image,
+        sub_title: product?.sub_title,
+        description: product?.description,
+        distributors: product?.distributors,
+        categoryId: product?.category_id,
+      })
+      ;
+     
+      
+    }
+  );}
+  
 
   res.send({
-    product: pro,
+    product: pro_list,
     status: true,
-    message: "distributor data show successfull",
+    message: "distributor data show successful",
   });
 };
-
 module.exports.distributor_order = async (req, res) => {
   await Order.find({ distributor_id: req.user._id, return_status: 0 })
     .sort({ createdAt: -1 })
@@ -563,6 +635,7 @@ module.exports.product_search = async (req, res) => {
 const { rm } = require("fs/promises");
 const payout = require("../Models/payout");
 const { off } = require("process");
+const Category = require("../Models/Category");
 module.exports.get_invoice = async (req, res) => {
   try {
     let getOrder = await Order.findOne({ order_id: req.query.order_id });
@@ -609,7 +682,6 @@ module.exports.get_invoice = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.send({ status: false, message: err.message, data: null });
-
   }
 };
 
@@ -791,17 +863,31 @@ module.exports.distributor_get_product_retailer = async (req, res) => {
 };
 
 exports.distributor_reject = async (req, res) => {
-  const distributorId = req.body.distributorId; 
+  const distributorId = req.body.distributorId;
   try {
-    const distributor = await Distributor.findByIdAndUpdate(distributorId, { verify: false }, { new: true });
+    const distributor = await Distributor.findByIdAndUpdate(
+      distributorId,
+      { verify: false },
+      { new: true }
+    );
     if (!distributor) {
       // Check if the distributor was not found
-      return res.status(404).json({ success: false, message: 'Distributor not found.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Distributor not found." });
     }
-    res.status(200).json({ success: true, message: 'Distributor Rejected successfully.' ,data:distributor});
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Distributor Rejected successfully.",
+        data: distributor,
+      });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to reject distributor.' });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to reject distributor." });
   }
 };
 // <<<<<<------------------------------Mongo services ------------------------------------------->>>
