@@ -946,8 +946,8 @@ module.exports.updatePassword = async (req, res, next) => {
 module.exports.paymentInitiated = async (req, res) => {
   try {
     var JSONDataPayload = {
-       merchantId: "PGTESTPAYUAT",
-      //merchantId: "MEDDAILYONLINE",
+      //  merchantId: "PGTESTPAYUAT",
+      merchantId: "MEDDAILYONLINE",
       merchantTransactionId: "MT" + Math.floor(new Date()),
       merchantUserId: "MEDDAILYONLINE",
       amount: req.body.paymentPayload.price  * 100,
@@ -963,13 +963,13 @@ module.exports.paymentInitiated = async (req, res) => {
     // req.body.paymentPayload.price 
 
     let encoded = base64json.stringify(JSONDataPayload, null, 2);
-    var data = `${encoded}/pg/v1/pay` + "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+    var data = `${encoded}/pg/v1/pay` + "d7294921-bcce-4501-ae5e-303eb9bfa547";
     //salt key d7294921-bcce-4501-ae5e-303eb9bfa547
 
 
     var sh = sha256(data);
 
-    var fnal = `${sh}###1`;
+    var fnal = `${sh}###2`;
 
     // console.log("body", req.body);
     console.log("data", data);
