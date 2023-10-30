@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 443;
 
 
 app.use(cors({
-  // origin: '*'
+ origin: '*'
 }))
 
 
