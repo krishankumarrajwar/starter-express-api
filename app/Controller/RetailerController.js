@@ -981,10 +981,10 @@ module.exports.paymentInitiated = async (req, res) => {
       encode: encoded,
       fnal: fnal,
     };
-
+//url:"https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
     const options = {
       method: "POST",
-      url: "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay",
+      url: "https://api.phonepe.com/apis/hermes/pg/v1/pay",
       headers: {
         accept: "application/json",
         "Content-Type": "application/json",
