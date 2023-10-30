@@ -951,9 +951,9 @@ module.exports.paymentInitiated = async (req, res) => {
       merchantTransactionId: "MT" + Math.floor(new Date()),
       merchantUserId: "MEDDAILYONLINE",
       amount: req.body.paymentPayload.price  * 100,
-      redirectUrl: "https://meddaily.in/#/home",
+      redirectUrl: "https://meddaily.in/#/payment_confirmed",
       redirectMode: "REDIRECT",
-      callbackUrl: "https://meddaily.in/#/home",
+      callbackUrl: "https://meddaily.in/#/payment_confirmed",
       mobileNumber: "9999999999",
       paymentInstrument: {
         type: "PAY_PAGE",
