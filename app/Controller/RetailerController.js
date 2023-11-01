@@ -806,7 +806,7 @@ module.exports.get_return = async (req, res) => {
         res.send({
           status: true,
           message: "data fetched",
-          data: mappedResults,
+          data: mappedResults.reverse(),
         });
       })
       .catch((err) => {
