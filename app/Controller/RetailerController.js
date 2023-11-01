@@ -613,16 +613,16 @@ module.exports.checkout = async (req, res) => {
       retailer_id: req.user._id,
       order_id: orderid,
       distributor_id: distributorId,
-      price: req.body.price,
+      price: req.body.data.price,
       products: item,
-      payment_type: req.body.payment_type,
-      bonus_quantity: req.body.bonus_quantity,
+      payment_type: req.body.data.payment_type,
+      bonus_quantity: req.body.data.bonus_quantity,
     };
     await Order.create(obj)
       .then((item) => {
 
-     
-        res.send({ status: true, message: "order success", data: item });
+        console.log('created order', item)
+        res.send({ status: true, message: "order success", data: item , body:req.body.data});
       })
       .catch((err) => {
         res.send({ status: true, message: err.message, data: null });
