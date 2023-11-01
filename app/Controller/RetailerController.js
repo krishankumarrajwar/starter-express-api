@@ -36,12 +36,17 @@ module.exports.retailer_login = async (req, resp) => {
       const jwt = generateUsertoken(result);
       let saveToken = new token({ token: jwt });
       await saveToken.save();
-      resp.json({
+      if (result.verify=='true'){resp.json({
         status: true,
         message: "login successful",
         data: result,
         token: jwt,
-      });
+      });}
+      else{
+        resp.json({ status: false, message: "Waiting for admin approval" });
+        
+      }
+      
     } else {
       resp.json({ status: false, message: "login unsuccessful" });
     }
