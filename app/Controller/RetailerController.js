@@ -44,11 +44,7 @@ module.exports.retailer_login = async (req, resp) => {
       });}
       else{
         resp.json({ status: false, message: "Waiting for admin approval" });
-        Swal.fire(
-          'Please wait',
-          '"Waiting for admin approval!',
-          'error'
-        )
+        
       }
       
     } else {
