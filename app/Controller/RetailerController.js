@@ -66,8 +66,8 @@ module.exports.retailer_register = async (req, resp) => {
   console.log("data", data);
 
   console.log("req.files", req.files);
-  // data.licenseimage = req.files["image1"][0].location;
-  // data.gstimage = req.files["image2"][0].location;
+  data.licenseimage = req.files["image1"][0]?.location;
+  data.gstimage = req.files["image2"][0]?.location;
   const retailer = new Retailer(data);
   const retailer_data = await retailer.save();
   console.log(retailer_data);
