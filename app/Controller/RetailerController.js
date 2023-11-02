@@ -622,6 +622,9 @@ module.exports.checkout = async (req, res) => {
       products: item,
       payment_type: req.body.data.payment_type,
       bonus_quantity: req.body.data.bonus_quantity,
+      deliveryCost:req.body.data.deliveryCost,
+      tax:req.body.data.tax,
+      originalPrice:req.body.data.originalPrice
     };
     await Order.create(obj)
       .then((item) => {
