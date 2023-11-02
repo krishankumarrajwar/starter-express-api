@@ -670,6 +670,7 @@ module.exports.return_order = async (req, res) => {
         return_reason: req.body.reason,
         return_message: req.body.message,
         return_image: req.file ? req.file.location : "",
+        price:req.body.returnPrice
       }
     )
       .then((result) => {
