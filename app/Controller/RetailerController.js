@@ -606,6 +606,7 @@ module.exports.checkout = async (req, res) => {
           batch_no: "",
           exp_date: "",
           quantity: cartdata[0]?.quantity,
+          tax: product?.applicable_tax
         };
         item.push(obje);
       }
@@ -739,6 +740,7 @@ module.exports.order_details = async (req, res) => {
           data: result,
           retailer: retailerName,
           distributor: distributerName,
+          products: getProductTax
         });
       })
       .catch((err) => {
