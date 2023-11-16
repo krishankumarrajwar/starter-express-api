@@ -65,11 +65,14 @@ module.exports.getoffer = async (req, resp) => {
     .then((data) => {
       if (!data || data.length == 0) {
         response.sendResponse(resp, false, "Sorry, offer not found.");
+        return
       }
       response.senddataResponse(resp, data, true, "offer show Successfully.");
+      return
     })
     .catch((err) => {
       response.sendResponse(resp, false, err);
+      return
     });
 };
 

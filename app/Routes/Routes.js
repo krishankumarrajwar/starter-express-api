@@ -71,15 +71,11 @@ module.exports = (route) => {
   route.get("/get_cart", auth, RetailerController.get_cart);
   route.post("/update_cart", auth, RetailerController.update_cart);
   route.delete("/delete_cart", auth, RetailerController.delete_cart);
-  route.post("/payment_initiate",  RetailerController.paymentInitiated);
-  route.get("/call-back",  RetailerController.paymentCallback);
-
-
 
   // checkout
   route.get("/my_order", auth, RetailerController.my_order);
   route.get("/order_details", auth, RetailerController.order_details);
-  route.post("/checkout", auth, RetailerController.checkout);
+  route.post("/checkout",auth,  RetailerController.checkout);
   route.post(
     "/return_order",
     auth,
@@ -87,6 +83,8 @@ module.exports = (route) => {
     RetailerController.return_order
   );
   route.get("/get_all_return", auth, RetailerController.get_return);
+  route.post("/payment_initiate",  RetailerController.paymentInitiated);
+  route.post("/call-back",  RetailerController.paymentCallback);
 
   // distributor api
   route.get(
@@ -137,5 +135,6 @@ module.exports = (route) => {
 
   route.post('/forgot_password' , RetailerController.forGotPassword)
   route.post('/update_password' , RetailerController.updatePassword)
+  route.get('/get-product/:id' , RetailerController.getProduct)
 
 };

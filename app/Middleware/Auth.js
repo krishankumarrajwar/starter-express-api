@@ -4,6 +4,8 @@ const tokendb = require("../Models/token");
 const verifyToken = async (req, resp, next) => {
   const token = req.headers["token"];
 
+  console.log(token)
+
 
   if (!token) {
     resp.send({
@@ -14,7 +16,7 @@ const verifyToken = async (req, resp, next) => {
   // return next();
   try {
     var checkToken = await tokendb.findOne({ token: token });
-    // console.log(checkToken)
+   
     if (checkToken) {
       const verify = jwt.verify(token, process.env.JWT_KEY);
       req.user = verify.user_id;

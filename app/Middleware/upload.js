@@ -8,16 +8,14 @@ const s3Client = new S3Client({
     secretAccessKey: "ZFThbdMvA0Meg4qvcwEYtU4UEgQcgyQSBXSNStHe",
   },
 });
-
 const uploadToS3 = (req, res, next) => {
   const upload = multer({
     fileFilter: (req, file, cb) => {
       const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-
       if (allowedMimeTypes.includes(file.mimetype)) {
         // Allow the file to be uploaded
         cb(null, true);
-      } else { 
+      } else {
         // Reject the file
         cb(new Error("Invalid file format"));
       }
@@ -30,7 +28,6 @@ const uploadToS3 = (req, res, next) => {
       },
     }),
   }).single("image");
-
   upload(req, res, (error) => {
     if (error) {
       console.error("Error uploading file", error);
@@ -41,12 +38,10 @@ const uploadToS3 = (req, res, next) => {
     next();
   });
 };
-
 const uploadToS3multiple = (req, res, next) => {
   const upload = multer({
     fileFilter: (req, file, cb) => {
       const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-
       if (allowedMimeTypes.includes(file.mimetype)) {
         // Allow the file to be uploaded
         cb(null, true);
@@ -66,7 +61,6 @@ const uploadToS3multiple = (req, res, next) => {
     { name: "image1", maxCount: 1 },
     { name: "image2", maxCount: 1 },
   ]);
-
   upload(req, res, (error) => {
     if (error) {
       console.error("Error uploading file", error);
@@ -74,9 +68,7 @@ const uploadToS3multiple = (req, res, next) => {
     }
     next();
   });
-
 };
-
 const storage1 = multer.diskStorage({
   destination: function (req, file, cb) {
     // Specify the destination directory where uploaded files will be stored
@@ -87,9 +79,7 @@ const storage1 = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-
 const upload1 = multer({ storage: storage1 });
-
 const streamedUpload = async (data) => {
   // Create an instance of the S3 service
   const uploadParams = {
@@ -106,14 +96,11 @@ const streamedUpload = async (data) => {
     console.error("Error uploading file:", error);
   }
 };
-
 // Define the Multer middleware function
 const normaluploadMiddleware = upload1.single("file");
-
 module.exports = {
   streamedUpload: streamedUpload,
   uploadToS3: uploadToS3,
   uploadToS3multiple: uploadToS3multiple,
   normaluploadMiddleware: normaluploadMiddleware,
 };
-

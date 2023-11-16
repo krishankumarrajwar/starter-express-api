@@ -101,7 +101,7 @@ module.exports.all_order = async (req, res) => {
 module.exports.order_status_change = async (req, res) => {
   const { order_id, status } = req.body;
   await Order.findOneAndUpdate(
-    { _id: order_id },
+    { order_id: order_id },
     { order_status: status },
     { new: true }
   )
@@ -116,8 +116,20 @@ module.exports.order_status_change = async (req, res) => {
 module.exports.order_detail = async (req, res) => {
   const { order_id } = req.body;
   await Order.findOne({ _id: order_id })
-    .then((item) => {
-      response.sendResponse(res, "success", item);
+    .then(async (item) => {
+      let distributerName = await Distributor.findOne({
+        _id: item.distributor_id,
+      });
+      let retailerName = await Retailer.findOne({
+        _id: item.retailer_id,
+      });
+      // response.sendResponse(res, "success", item, retailerName, distributerName);
+      res.send({
+        status:'success',
+        message:item,
+        retailerName:retailerName,
+        distributerName:distributerName
+      })
     })
     .catch((err) => {
       response.sendResponse(res, "fail", err);
@@ -125,7 +137,43 @@ module.exports.order_detail = async (req, res) => {
 };
 
 module.exports.return_order_request = async (req, res) => {
-  res.send("Nothing here");
+
+
+  try {
+    let obj = {};
+  
+    await Order.find({})
+      .then(async (item) => {
+        const mappedResults = await Promise.all(
+          item.map(async (e) => {
+            let distributerName = await Distributor.findOne({
+              _id: e.distributor_id,
+            });
+            let retailerName = await Retailer.findOne({
+              _id: e.retailer_id,
+            });
+            e._doc.distributor_name =
+              distributerName.firstname + " " + distributerName.lastname;
+            e._doc.retailer_name = retailerName.ownername;
+            return e;
+          })
+        );
+        res.send({
+          status: true,
+          message: "data fetched",
+          data: mappedResults,
+        });
+      })
+      .catch((err) => {
+        res.send({
+          status: false,
+          message: "data fetch failed",
+          data: null,
+        });
+      });
+  } catch (err) {
+    console.log(err);
+  }
 };
 module.exports.return_order_accepted = async (req, res) => {
   await Order.updateOne({ order_id: req.query.order_id }, { return_status: 3 })
@@ -214,10 +262,10 @@ module.exports.get_return_admin = async (req, res) => {
     } else {
       obj = {
         return_status: { $gt: 1 },
-        createdAt: {
-          $gte: req.query.from,
-          $lte: req.query.to,
-        },
+        // createdAt: {
+        //   $gte: req.query.from,
+        //   $lte: req.query.to,
+        // },
       };
     }
     console.log(obj);

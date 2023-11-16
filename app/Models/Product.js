@@ -10,7 +10,7 @@ var ProductSchema = mongoose.Schema(
     time: { type: Number, default: Date.now },
     productStatus: { type: String, default: true },
     hsn: String,
-    applicable_tax: Number,
+    applicable_tax:{ type: Number, default: 0 },
     distributors: { type: Array, default: [] },
   },
   {

@@ -153,7 +153,7 @@ module.exports.deleteproduct = async (req, resp) => {
 module.exports.update_inventory = async (req, res) => {
   let status, message;
   console.log("THiIS ==================>", req.body);
-  const { productId, distributorId, distributorName, price, stock } = req.body;
+  const { productId, distributorId, distributorName, price, stock, state } = req.body;
   const old_des = await Product.findOne({ _id: productId });
   console.log(old_des);
   let flag = 0;
@@ -204,6 +204,7 @@ module.exports.update_inventory = async (req, res) => {
     updatedAt: Date.now(),
     price: parseInt(price),
     stock: parseInt(stock),
+    state:state
   };
   old_des.distributors.push(newDistributor);
   // `doc` is the document _before_ `update` was applied
